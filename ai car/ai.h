@@ -2,10 +2,16 @@
 #include <vector>
 #include <random>
 
+class Layer
+{
+public:
+
+};
+
 class Ai
 {
 public:
-	Ai(int* inNeur, int inSizeNeur);
+	Ai(std::vector<int> inSize);
 	void calculateOutput();	
 
 	void setRandomValues();
@@ -18,12 +24,10 @@ private:
 
 	int random(int min, int max);
 
-	int* nNeur;
-	int nLayer;
+	std::vector<int> sizes;
 
 	std::vector<std::vector<float>> neur;
 
 	std::vector<std::vector<std::vector<float>>> weight;
 	std::vector<std::vector<float>> bias;
 };
-

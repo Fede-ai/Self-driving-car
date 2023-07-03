@@ -14,13 +14,12 @@ public:
 	void crash();
 
 private:
-	Ai ai;
+	Ai* ai = NULL;
 	sf::RectangleShape car;
 	sf::RectangleShape sensors[9];
 
-	static constexpr int nIn = 9;
-	static constexpr int nLayer = 3;
-	int nNeur[nLayer]{ nIn, 6, 2 };
+	static constexpr int nLayers = 3;
+	int aiSize[nLayers] = {9, 6, 2};
 
 	float velocity = 0;
 	const float acceleration = 0.05;

@@ -1,9 +1,14 @@
 #include "car.h"
 
 Car::Car()
-	:
-	ai(Ai(nNeur, nLayer))
 {
+	std::vector<int> aiLayers;
+	for (int i = 0; i < nLayers; i++)
+	{
+		aiLayers.push_back(aiSize[i]);
+	}
+	ai = new Ai(aiLayers);
+
 	car.setSize(sf::Vector2f(20, 40));
 	car.setOrigin(car.getSize().x / 2, car.getSize().y / 2);
 	car.setPosition(150, 600);

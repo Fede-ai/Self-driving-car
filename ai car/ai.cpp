@@ -1,11 +1,10 @@
 #include "ai.h"
+#include <iostream>
 
-Ai::Ai(int* inNeur, int inSizeNeur)
+Ai::Ai(std::vector<int> inSize)
 	:
-	nNeur(inNeur)
-{	
-	nLayer = inSizeNeur;
-
+	sizes(inSize)
+{
 	std::vector<float> inputLayer;
 	neur.push_back(inputLayer);
 	setRandomValues();
@@ -44,8 +43,8 @@ float Ai::activationFunction(float num)
 void Ai::setRandomValues()
 {
 	weight.clear();
-
-	for (int layer = 0; layer < nLayer - 1; layer++)
+	
+	for (int layer = 0; layer < sizes.size(); layer++)
 	{
 		std::vector<std::vector<float>> weight1;
 		for (int before = 0; before < nNeur[layer]; before++)

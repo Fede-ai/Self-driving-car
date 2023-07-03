@@ -65,12 +65,6 @@ void Game::update()
 	}
 	lastMousePos = mousePos;
 	
-	//handle fps counter
-	if (countTime)
-	{
-		//std::cout << getTime() - lastTime << "\n";
-		lastTime = getTime();
-	}
 	
 	for (int i = 0; i < nCars; i++)
 	{

@@ -22,7 +22,7 @@ private:
 	uint64_t getTime();
 
 	sf::RenderWindow& window;
-	static constexpr int nCars = 10;
+	static constexpr int nCars = 1;
 	Car cars[nCars];
 
 	sf::Vector2f lastMousePos;
@@ -30,6 +30,5 @@ private:
 	std::vector<Wall> walls;
 	bool isBuilding = false;
 
-	bool countTime = true;
 	uint64_t lastTime = getTime();
 };

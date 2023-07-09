@@ -4,18 +4,91 @@ Game::Game(sf::RenderWindow& inWindow)
 	:
 	window(inWindow)
 {
+	settings.antialiasingLevel = 5;
+
+	window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
+	window.setView(sf::View(sf::Vector2f(640, 360), windowDim));
+
+	std::thread thread(&Game::ok, this);
+	thread.detach();
 }
 
-void Game::play()
-{	
-	update();
-	draw();
+void Game::ok()
+{
+	while (true)
+	{
+		std::string ciao;
+		std::cin >> ciao;
+		std::cout << ciao;
+	}
+
 }
 
-void Game::update()
+void Game::frame()
+{
+	//take inputs
+	uint64_t second = getTime() / 1000;
+	if ((getTime() - second * 1000) / 1000.f >= (float)currentInputPs / maxInputPs)
+	{
+		input();
+		currentInputPs++;
+	}
+
+	//update
+	if ((getTime() - second * 1000) / 1000.f >= (float)currentUpdatePs / maxUpdatePs)
+	{
+		update();
+		currentUpdatePs++;
+	}
+
+	//draw
+	if ((getTime() - second * 1000) / 1000.f >= (float)currentDrawPs / maxDrawPs)
+	{
+		draw();
+		currentDrawPs++;
+	}
+
+	//output and reset ps stats
+	if (second != currentSecond)
+	{		
+		std::cout << "frames/sec: " << currentDrawPs << ", updates/sec: " << currentUpdatePs << ", inputs/sec: " << currentInputPs << "\n";
+		currentSecond = second;
+		currentInputPs = 0;
+		currentUpdatePs = 0;
+		currentDrawPs = 0;
+	}
+}
+
+void Game::input()
 {	
+	//update mouse position
 	sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition());
 	sf::Vector2f mouseP = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+	//handle fullscreen
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
+	{
+		if (canFullscreen)
+		{
+			sf::View view(window.getView());
+
+			if (isFullscreen)
+			{
+				window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
+			}
+			else
+			{
+				window.create(sf::VideoMode(), "Game", sf::Style::Fullscreen, settings);
+			}
+			window.setView(view);
+			isFullscreen = !isFullscreen;
+		}
+		canFullscreen = false;
+	}
+	else
+	{
+		canFullscreen = true;
+	}
 
 	//handle view movement and walls creation
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
@@ -57,66 +130,60 @@ void Game::update()
 				walls[walls.size() - 1][1].position = mouseP;
 				walls[walls.size() - 1].isEditing = false;
 			}
-		}	
+		}
 	}
 	else if (isBuilding)
 	{
 		isBuilding = false;
 	}
 	lastMousePos = mousePos;
-	
-	
-	for (int i = 0; i < nCars; i++)
+
+	//handle pause
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
 	{
-		cars[i].move();
-		cars[i].resetSensors();	
-		
-		for (int a = 0; a < 9; a++)
+		if (canPause)
 		{
-			for (int b = 0; b < walls.size(); b++)
-			{
-				if (!walls[b].isEditing)
-				{
-					sensorWall(cars[i].getSensor(a), walls[b]);
-				}
-			}	
+			isPaused = !isPaused;
+			canPause = false;
+		}
+	}
+	else
+	{
+		canPause = true;
+	}
+}
+
+void Game::update()
+{	
+	//handle cars
+	for (int car = 0; car < nCars; car++)
+	{
+		if (!isPaused && !cars[car].crashed)
+		{
+			cars[car].moveCar();
+			cars[car].collide(walls);
+			cars[car].resetSensors();	
+			cars[car].updateSensors(walls);
 		}
 	}
 }
 
 void Game::draw()
 {
+	window.clear(sf::Color(130, 130, 130));
+
+	//draw walls
 	for (int a = 0; a < walls.size(); a++)
 	{
 		window.draw(walls[a]);
 	}
-	
+	//draw cars
 	for (int i = 0; i < nCars; i++)
 	{
-		cars[i].draw(window);
+		cars[i].drawCar(window);
 	}
-}
 
-void Game::sensorWall(sf::RectangleShape& sensor, sf::VertexArray wall)
-{	
-	//calculate car info
-	float angSens = 360 - sensor.getRotation();
-	float coefSens = tan(angSens * 3.1415 / 180);
-	float dislocSens = sensor.getPosition().y + coefSens * sensor.getPosition().x;
-
-	//calculate wall info
-	float coefWall = -(wall[0].position.y - wall[1].position.y) / (wall[0].position.x - wall[1].position.x);
-	float dislocWall = wall[0].position.y + coefWall * wall[0].position.x;
-	float xInter = (dislocSens - dislocWall) / (coefSens - coefWall);
-	float yInter = xInter * coefSens - dislocSens;
-
-	if (sensor.getGlobalBounds().contains(xInter, -yInter) && wall.getBounds().contains(xInter, -yInter))
-	{
-		float xDist = sensor.getPosition().x - xInter;
-		float yDist = sensor.getPosition().y + yInter;
-		float dist = sqrt(std::pow(xDist, 2) + std::pow(yDist, 2));
-		sensor.setSize(sf::Vector2f(std::min(dist, sensor.getSize().x), 1));
-	}
+	window.display();
 }
 
 bool Game::collision(sf::RectangleShape car, sf::VertexArray wall)

@@ -136,12 +136,14 @@
     <ClCompile Include="ai.cpp" />
     <ClCompile Include="car.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="layer.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ai.h" />
     <ClInclude Include="car.h" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="layer.h" />
     <ClInclude Include="wall.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

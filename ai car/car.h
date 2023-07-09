@@ -1,17 +1,21 @@
 #pragma once
 #include "SFML/Graphics.hpp"
 #include "ai.h"
+#include "wall.h"
 
 class Car
 {
 public:
 	Car();
-	void move();
-	void draw(sf::RenderWindow& window);
+	void moveCar();
+	void drawCar(sf::RenderWindow& window);
 
-	sf::RectangleShape& getSensor(int n);
-	void resetSensors();
+	void collide(std::vector<Wall> walls);
 	void crash();
+
+	void resetSensors();
+	void updateSensors(std::vector<Wall> walls);
+	bool crashed = false;
 
 private:
 	Ai* ai = NULL;
@@ -19,15 +23,9 @@ private:
 	sf::RectangleShape sensors[9];
 
 	static constexpr int nLayers = 3;
-	int aiSize[nLayers] = {9, 6, 2};
+	int aiSize[nLayers] = {9, 6, 3};
 
-	float velocity = 0;
-	const float acceleration = 0.05;
-	const double maxRotation = 4;
-	const float maxVelocity = 5;
-
-	bool crashed = false;
-	bool ablePause = true;
-	bool paused = true;
+	const int velocity = 5;
+	const int rotation = 4;
 };
 

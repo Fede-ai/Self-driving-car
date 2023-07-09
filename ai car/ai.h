@@ -1,33 +1,18 @@
 #pragma once
 #include <vector>
 #include <random>
-
-class Layer
-{
-public:
-
-};
+#include "layer.h"
 
 class Ai
 {
 public:
-	Ai(std::vector<int> inSize);
-	void calculateOutput();	
+	Ai(std::vector<int> size);
+	void calculateOutput(std::vector<double> inputs);
 
 	void setRandomValues();
-	void setInputs(float inputs[]);
-	float getOutput(int n);
+	double getOutput(int n);
 
 private:
-	float calculateNeuron(int layer, int n);	
-	float activationFunction(float num);
 
-	int random(int min, int max);
-
-	std::vector<int> sizes;
-
-	std::vector<std::vector<float>> neur;
-
-	std::vector<std::vector<std::vector<float>>> weight;
-	std::vector<std::vector<float>> bias;
+	std::vector<Layer> layers;
 };

@@ -144,7 +144,6 @@
     <ClInclude Include="car.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="layer.h" />
-    <ClInclude Include="wall.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

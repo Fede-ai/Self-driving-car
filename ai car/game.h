@@ -3,7 +3,6 @@
 #include <thread>
 #include "SFML/Graphics.hpp"
 #include "ai.h"
-#include "wall.h"
 #include "car.h"
 
 class Game
@@ -39,10 +38,11 @@ private:
 
 	static constexpr int nCars = 1;
 	Car cars[nCars];
-	std::vector<Wall> walls;
+	std::vector<sf::VertexArray> walls;
 
 	bool isMoving = false;
 	bool isBuilding = false;
 	bool isPaused = true;
 	bool canPause = false;
+	bool canDeleteWall = false;
 };

@@ -41,9 +41,6 @@
     <ClInclude Include="game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wall.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="layer.h">
       <Filter>Header Files</Filter>
     </ClInclude>

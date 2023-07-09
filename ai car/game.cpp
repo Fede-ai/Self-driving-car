@@ -47,7 +47,7 @@ void Game::frame()
 	{	
 		if (outputPsStat)
 		{
-			std::cout << "frames/sec: " << currentDrawPs << ", updates/sec: " << currentUpdatePs << ", inputs/sec: " << currentInputPs << "\n";
+			std::cout << "\tframes/sec: " << currentDrawPs << ", updates/sec: " << currentUpdatePs << ", inputs/sec: " << currentInputPs << "\n";
 		}
 		currentSecond = second;
 		currentInputPs = 0;
@@ -61,17 +61,18 @@ void Game::takeConsoleInputs()
 	auto help = []()
 	{
 		std::cout << "hi dude, here is a list of the commands you can enter through this console, any string that does not coincide with any of this commands will be ignored:\n";
-		std::cout << "  -  help\tmakes this message pop up\n";
-		std::cout << "  -  psstats\ttoggles the output of \'per second\'-related stats\n";
+		std::cout << "  -  help\t\t\t\tmakes this message pop up\n";
+		std::cout << "  -  psstats\t\t\t\ttoggles the output of \'per second\'-related stats\n";
 		
 		std::cout << "\nWARNING: some commands may output continuous information through the console, if you want to enter another command, just type it and press enter, it does not matter if the command gets split up\n";
 		
 		std::cout << "\nthere are also some commands which you can execute by pressing some keys while the main window has focus, here is a list of them:\n";
 		std::cout << "  -  left click + move mouse\t\tmove the camera\n";
 		std::cout << "  -  left click + e + move mouse\tcreate wall, release mouse to stop building\n";
-		std::cout << "  -  mouse wheel\tzoom/un-zoom\n";
-		std::cout << "  -  alt + enter\ttoggle fullscreen\n";		
-		std::cout << "  -  p\t\t\tpause/un-pause the simulation\n\n";
+		std::cout << "  -  backspace\t\t\t\tdelete the last wall created\n";
+		std::cout << "  -  mouse wheel\t\t\tzoom/un-zoom\n";
+		std::cout << "  -  alt + enter\t\t\ttoggle fullscreen\n";		
+		std::cout << "  -  p\t\t\t\t\tpause/un-pause the simulation\n\n";
 	};
 
 	help();
@@ -129,10 +130,11 @@ void Game::input()
 			canFullscreen = true;
 		}
 
-		//handle view movement and walls creation
+		//handle camera movement and walls creation
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			if (window.hasFocus() && !isBuilding && !sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+			//move camera movement
+			if (!isBuilding && !sf::Keyboard::isKeyPressed(sf::Keyboard::E))
 			{
 				sf::View view(window.getView());
 				float x = window.getView().getSize().x / window.getSize().x;
@@ -146,13 +148,14 @@ void Game::input()
 				isMoving = false;
 			}
 
-			if (window.hasFocus() && !isMoving)
+			//handle walls creation
+			if (!isMoving)
 			{
 				if (!isBuilding)
 				{
 					if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
 					{
-						Wall wall;
+						sf::VertexArray wall;
 						wall.resize(2);
 						wall.setPrimitiveType(sf::Lines);
 						wall[0].position = mouseP;
@@ -167,7 +170,6 @@ void Game::input()
 				else
 				{
 					walls[walls.size() - 1][1].position = mouseP;
-					walls[walls.size() - 1].isEditing = false;
 				}
 			}
 		}
@@ -176,7 +178,6 @@ void Game::input()
 			isBuilding = false;
 		}
 		
-
 		//handle pause
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
 		{
@@ -189,6 +190,23 @@ void Game::input()
 		else
 		{
 			canPause = true;
+		}
+
+		//handle walls destruction
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Backspace))
+		{
+			if (canDeleteWall)
+			{
+				if (walls.size() > 0)
+				{
+					walls.pop_back();
+				}
+				canDeleteWall = false;
+			}
+		}
+		else
+		{
+			canDeleteWall = true;
 		}
 	}
 
@@ -203,10 +221,10 @@ void Game::update()
 		if (!isPaused && !cars[car].crashed)
 		{
 			cars[car].moveCar();
-			cars[car].collide(walls);
+			cars[car].crashed = cars[car].collide(walls);
 			cars[car].resetSensors();	
 			cars[car].updateSensors(walls);
-		}
+		}			
 	}
 }
 
@@ -227,84 +245,6 @@ void Game::draw()
 
 	window.display();
 }
-
-/*
-bool Game::collision(sf::RectangleShape car, sf::VertexArray wall)
-{
-	sf::Vector2f rect1Point[4];
-	sf::Vector2f rect2Point[4];
-	float rect1Proj[4];
-	float rect2Proj[4];
-	/*
-	for (int i = 0; i < 4; i++)
-	{
-		rect1Point[i] = vertexRect(rect1, i);
-		rect2Point[i] = vertexRect(rect2, i);
-	}
-
-	float angles[4] = {
-		360 - rect1.getRotation(),
-		360 - rect1.getRotation() + 90,
-		360 - rect2.getRotation(),
-		360 - rect2.getRotation() + 90
-	};
-
-	for (int a = 0; a < 4; a++)
-	{
-		for (int b = 0; b < 4; b++)
-		{
-			float ipot = sqrt(std::pow(rect1Point[b].x, 2) + std::pow(rect1Point[b].y, 2));
-			float ang = acos(rect1Point[b].x / ipot) * 180 / 3.1415;
-			float angg = angles[a] + ang;
-			if (rect1Point[b].y <= 0)
-			{
-				angg = angles[a] - ang;
-			}
-			rect1Proj[b] = cos(angg * 3.1415 / 180) * ipot;
-		}
-		for (int b = 0; b < 4; b++)
-		{
-			float ipot = sqrt(std::pow(rect2Point[b].x, 2) + std::pow(rect2Point[b].y, 2));
-			float ang = acos(rect2Point[b].x / ipot) * 180 / 3.1415;
-			float angg = angles[a] + ang;
-			if (rect2Point[b].y <= 0)
-			{
-				angg = angles[a] - ang;
-			}
-			rect2Proj[b] = cos(angg * 3.1415 / 180) * ipot;
-		}
-
-		float max1, min1, max2, min2;
-
-		max1 = std::max(std::max(std::max(rect1Proj[3], rect1Proj[2]), rect1Proj[1]), rect1Proj[0]);
-		min1 = std::min(std::min(std::min(rect1Proj[3], rect1Proj[2]), rect1Proj[1]), rect1Proj[0]);
-		max2 = std::max(std::max(std::max(rect2Proj[3], rect2Proj[2]), rect2Proj[1]), rect2Proj[0]);
-		min2 = std::min(std::min(std::min(rect2Proj[3], rect2Proj[2]), rect2Proj[1]), rect2Proj[0]);
-
-		if (!((min1 > min2 && min1 < max2) || (max1 > min2 && max1 < max2) || (min2 > min1 && min2 < max1) || (max2 > min1 && max2 < max1)))
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-//n: 0 = top-left; 1 = top-right; 2 = bot-right; 3 = bot-left
-sf::Vector2f Game::vertexRect(sf::RectangleShape rect, int n)
-{
-	float incVertices[4];
-
-	float ipot = sqrt(std::pow(rect.getSize().x, 2) + std::pow(rect.getSize().y, 2));
-	float diagInc = acos(rect.getSize().x / ipot) * 180 / 3.1415;
-
-	incVertices[0] = 360 - rect.getRotation() + diagInc;
-	incVertices[1] = 360 - rect.getRotation() - diagInc;
-	incVertices[2] = 360 - rect.getRotation() + 180 + diagInc;
-	incVertices[3] = 360 - rect.getRotation() + 180 - diagInc;
-
-	return (rect.getPosition() + sf::Vector2f(cos(incVertices[n] * 3.1415 / 180) * ipot / 2, -sin(incVertices[n] * 3.1415 / 180) * ipot / 2));
-}
-*/
 
 uint64_t Game::getTime()
 {

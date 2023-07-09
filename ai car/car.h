@@ -1,7 +1,6 @@
 #pragma once
 #include "SFML/Graphics.hpp"
 #include "ai.h"
-#include "wall.h"
 
 class Car
 {
@@ -10,11 +9,11 @@ public:
 	void moveCar();
 	void drawCar(sf::RenderWindow& window);
 
-	void collide(std::vector<Wall> walls);
-	void crash();
+	bool collide(std::vector<sf::VertexArray> walls);
+	sf::Vector2f vertexRect(sf::RectangleShape rect, int n);
 
 	void resetSensors();
-	void updateSensors(std::vector<Wall> walls);
+	void updateSensors(std::vector<sf::VertexArray> walls);
 	bool crashed = false;
 
 private:

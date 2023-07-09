@@ -1,5 +1,10 @@
 #include "game.h"
 
+constexpr unsigned int str2int(const char* str, int h = 0)
+{
+	return !str[h] ? 5381 : (str2int(str, h + 1) * 33) ^ str[h];
+}
+
 Game::Game(sf::RenderWindow& inWindow)
 	:
 	window(inWindow)
@@ -9,19 +14,8 @@ Game::Game(sf::RenderWindow& inWindow)
 	window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
 	window.setView(sf::View(sf::Vector2f(640, 360), windowDim));
 
-	std::thread thread(&Game::ok, this);
+	std::thread thread(&Game::takeConsoleInputs, this);
 	thread.detach();
-}
-
-void Game::ok()
-{
-	while (true)
-	{
-		std::string ciao;
-		std::cin >> ciao;
-		std::cout << ciao;
-	}
-
 }
 
 void Game::frame()
@@ -50,8 +44,11 @@ void Game::frame()
 
 	//output and reset ps stats
 	if (second != currentSecond)
-	{		
-		std::cout << "frames/sec: " << currentDrawPs << ", updates/sec: " << currentUpdatePs << ", inputs/sec: " << currentInputPs << "\n";
+	{	
+		if (outputPsStat)
+		{
+			std::cout << "frames/sec: " << currentDrawPs << ", updates/sec: " << currentUpdatePs << ", inputs/sec: " << currentInputPs << "\n";
+		}
 		currentSecond = second;
 		currentInputPs = 0;
 		currentUpdatePs = 0;
@@ -59,98 +56,143 @@ void Game::frame()
 	}
 }
 
+void Game::takeConsoleInputs()
+{
+	auto help = []()
+	{
+		std::cout << "hi dude, here is a list of the commands you can enter through this console, any string that does not coincide with any of this commands will be ignored:\n";
+		std::cout << "  -  help\tmakes this message pop up\n";
+		std::cout << "  -  psstats\ttoggles the output of \'per second\'-related stats\n";
+		
+		std::cout << "\nWARNING: some commands may output continuous information through the console, if you want to enter another command, just type it and press enter, it does not matter if the command gets split up\n";
+		
+		std::cout << "\nthere are also some commands which you can execute by pressing some keys while the main window has focus, here is a list of them:\n";
+		std::cout << "  -  left click + move mouse\t\tmove the camera\n";
+		std::cout << "  -  left click + e + move mouse\tcreate wall, release mouse to stop building\n";
+		std::cout << "  -  mouse wheel\tzoom/un-zoom\n";
+		std::cout << "  -  alt + enter\ttoggle fullscreen\n";		
+		std::cout << "  -  p\t\t\tpause/un-pause the simulation\n\n";
+	};
+
+	help();
+
+	while (true)
+	{	
+		std::string command;
+		std::cin >> command;
+		std::cout << "\n";
+
+		switch (str2int(command.data()))
+		{
+		case str2int("help"):
+			help();
+			break;
+		case str2int("psstats"):
+			outputPsStat = !outputPsStat;
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 void Game::input()
-{	
+{			
 	//update mouse position
 	sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition());
 	sf::Vector2f mouseP = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-	//handle fullscreen
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
+	if (window.hasFocus())
 	{
-		if (canFullscreen)
+		//handle fullscreen
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
 		{
-			sf::View view(window.getView());
-
-			if (isFullscreen)
+			if (canFullscreen)
 			{
-				window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
-			}
-			else
-			{
-				window.create(sf::VideoMode(), "Game", sf::Style::Fullscreen, settings);
-			}
-			window.setView(view);
-			isFullscreen = !isFullscreen;
-		}
-		canFullscreen = false;
-	}
-	else
-	{
-		canFullscreen = true;
-	}
+				sf::View view(window.getView());
 
-	//handle view movement and walls creation
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-	{
-		if (window.hasFocus() && !isBuilding && !sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-		{
-			sf::View view(window.getView());
-			float x = window.getView().getSize().x / window.getSize().x;
-			float y = window.getView().getSize().y / window.getSize().y;
-			view.move((lastMousePos - mousePos).x * x, (lastMousePos - mousePos).y * y);
-			window.setView(view);
-			isMoving = true;
+				if (isFullscreen)
+				{
+					window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
+				}
+				else
+				{
+					window.create(sf::VideoMode::getDesktopMode(), "Game", sf::Style::Fullscreen, settings);
+				}
+				window.setView(view);
+				isFullscreen = !isFullscreen;
+			}
+			canFullscreen = false;
 		}
 		else
 		{
-			isMoving = false;
+			canFullscreen = true;
 		}
 
-		if (window.hasFocus() && !isMoving)
+		//handle view movement and walls creation
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			if (!isBuilding)
+			if (window.hasFocus() && !isBuilding && !sf::Keyboard::isKeyPressed(sf::Keyboard::E))
 			{
-				if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-				{
-					Wall wall;
-					wall.resize(2);
-					wall.setPrimitiveType(sf::Lines);
-					wall[0].position = mouseP;
-					wall[1].position = mouseP;
-					wall[0].color = sf::Color::Black;
-					wall[1].color = sf::Color::Black;
-
-					walls.push_back(wall);
-					isBuilding = true;
-				}
+				sf::View view(window.getView());
+				float x = window.getView().getSize().x / window.getSize().x;
+				float y = window.getView().getSize().y / window.getSize().y;
+				view.move((lastMousePos - mousePos).x * x, (lastMousePos - mousePos).y * y);
+				window.setView(view);
+				isMoving = true;
 			}
 			else
 			{
-				walls[walls.size() - 1][1].position = mouseP;
-				walls[walls.size() - 1].isEditing = false;
+				isMoving = false;
+			}
+
+			if (window.hasFocus() && !isMoving)
+			{
+				if (!isBuilding)
+				{
+					if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+					{
+						Wall wall;
+						wall.resize(2);
+						wall.setPrimitiveType(sf::Lines);
+						wall[0].position = mouseP;
+						wall[1].position = mouseP;
+						wall[0].color = sf::Color::Black;
+						wall[1].color = sf::Color::Black;
+
+						walls.push_back(wall);
+						isBuilding = true;
+					}
+				}
+				else
+				{
+					walls[walls.size() - 1][1].position = mouseP;
+					walls[walls.size() - 1].isEditing = false;
+				}
 			}
 		}
-	}
-	else if (isBuilding)
-	{
-		isBuilding = false;
-	}
-	lastMousePos = mousePos;
-
-	//handle pause
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-	{
-		if (canPause)
+		else if (isBuilding)
 		{
-			isPaused = !isPaused;
-			canPause = false;
+			isBuilding = false;
+		}
+		
+
+		//handle pause
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
+		{
+			if (canPause)
+			{
+				isPaused = !isPaused;
+				canPause = false;
+			}
+		}
+		else
+		{
+			canPause = true;
 		}
 	}
-	else
-	{
-		canPause = true;
-	}
+
+	lastMousePos = mousePos;
 }
 
 void Game::update()
@@ -186,6 +228,7 @@ void Game::draw()
 	window.display();
 }
 
+/*
 bool Game::collision(sf::RectangleShape car, sf::VertexArray wall)
 {
 	sf::Vector2f rect1Point[4];
@@ -242,7 +285,7 @@ bool Game::collision(sf::RectangleShape car, sf::VertexArray wall)
 		{
 			return false;
 		}
-	}*/
+	}
 	return true;
 }
 
@@ -261,6 +304,7 @@ sf::Vector2f Game::vertexRect(sf::RectangleShape rect, int n)
 
 	return (rect.getPosition() + sf::Vector2f(cos(incVertices[n] * 3.1415 / 180) * ipot / 2, -sin(incVertices[n] * 3.1415 / 180) * ipot / 2));
 }
+*/
 
 uint64_t Game::getTime()
 {

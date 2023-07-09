@@ -12,15 +12,13 @@ public:
 	Game(sf::RenderWindow& inWindow);
 	void frame();
 
-private: 	
+private: 		
+	void takeConsoleInputs();
+
 	void input();
 	void update();
 	void draw();
 
-	void ok();
-
-	bool collision(sf::RectangleShape car, sf::VertexArray wall);
-	sf::Vector2f vertexRect(sf::RectangleShape rect, int n);
 	uint64_t getTime();
 
 	sf::RenderWindow& window;
@@ -37,6 +35,7 @@ private:
 	const int maxInputPs = 30;
 	const int maxUpdatePs = 200;	
 	const int maxDrawPs = 60;
+	bool outputPsStat = false;
 
 	static constexpr int nCars = 1;
 	Car cars[nCars];

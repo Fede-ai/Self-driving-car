@@ -8,23 +8,52 @@ Car::Car()
 		aiLayers.push_back(aiSize[i]);
 	}
 	ai = new Ai(aiLayers);
+	ai->setRandomValues();
 
 	car.setSize(sf::Vector2f(20, 40));
 	car.setOrigin(car.getSize().x / 2, car.getSize().y / 2);
-	car.setPosition(150, 600);
+	car.setPosition(160, 1080 - 150 - 20);
 	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
 	car.setOutlineThickness(-2);
 	car.setOutlineColor(sf::Color::Black);
 }
+Car::Car(Car first, Car second)
+{
+	std::vector<int> aiLayers;
+	for (int i = 0; i < nLayers; i++)
+	{
+		aiLayers.push_back(aiSize[i]);
+	}
+	ai = new Ai(aiLayers);
+	ai
+
+	car.setSize(sf::Vector2f(20, 40));
+	car.setOrigin(car.getSize().x / 2, car.getSize().y / 2);
+	car.setPosition(160, 1080 - 150 - 20);
+	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
+	car.setOutlineThickness(-2);
+	car.setOutlineColor(sf::Color::Black);
+}
+Car::~Car()
+{
+	delete ai;
+}
 
 void Car::moveCar()
 {
+	std::vector<double> inputs;
+	for (int i = 0; i < 9; i++)
+	{
+		inputs.push_back(sensors[i].getSize().x/3000.f);
+	}
+	ai->calculateOutput(inputs);
+
 	//apply rotation
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+	if (ai->getOutput(0) > ai->getOutput(1) && ai->getOutput(0) > ai->getOutput(2))
 	{
 		car.rotate(rotation);
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+	else if (ai->getOutput(1) < ai->getOutput(2))
 	{
 		car.rotate(-rotation);
 	}

@@ -6,6 +6,9 @@ class Car
 {
 public:
 	Car();
+	Car(Car first, Car second);
+	~Car();
+
 	void moveCar();
 	void drawCar(sf::RenderWindow& window);
 
@@ -16,6 +19,7 @@ public:
 	void updateSensors(std::vector<sf::VertexArray> walls);
 	bool crashed = false;
 
+	int fitness = 0;
 private:
 	Ai* ai = NULL;
 	sf::RectangleShape car;

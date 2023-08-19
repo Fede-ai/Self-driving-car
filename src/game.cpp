@@ -10,9 +10,8 @@ Game::Game(sf::RenderWindow& inWindow)
 	window(inWindow)
 {
 	settings.antialiasingLevel = 5;
-
 	window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
-	window.setView(sf::View(sf::Vector2f(640, 360), windowDim));
+	window.setView(sf::View(sf::Vector2f(1920/2, 1080/2), sf::Vector2f(1920, 1080)));
 
 	std::thread thread(&Game::takeConsoleInputs, this);
 	thread.detach();
@@ -111,7 +110,6 @@ void Game::input()
 			if (canFullscreen)
 			{
 				sf::View view(window.getView());
-
 				if (isFullscreen)
 				{
 					window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
@@ -215,17 +213,29 @@ void Game::input()
 
 void Game::update()
 {	
-	//handle cars
-	for (int car = 0; car < nCars; car++)
+	if (!isPaused)
 	{
-		if (!isPaused && !cars[car].crashed)
+		//handle cars
+		for (int car = 0; car < nCars; car++)
 		{
-			cars[car].moveCar();
-			cars[car].crashed = cars[car].collide(walls);
-			cars[car].resetSensors();	
-			cars[car].updateSensors(walls);
-		}			
+			bool stillGoing = false;
+			if (!cars[car].crashed)
+			{			
+				stillGoing = true;
+				cars[car].resetSensors();	
+				cars[car].updateSensors(walls);
+				cars[car].moveCar();
+				cars[car].crashed = cars[car].collide(walls);
+				cars[car].fitness++;
+			}	
+
+			if (stillGoing == false)
+			{
+				
+			}		
+		}		
 	}
+
 }
 
 void Game::draw()

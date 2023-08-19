@@ -21,7 +21,7 @@ private:
 	uint64_t getTime();
 
 	sf::RenderWindow& window;
-	sf::Vector2f windowDim = sf::Vector2f(1280, 720);
+	sf::Vector2f windowDim = sf::Vector2f(sf::VideoMode::getDesktopMode().width*2/3, sf::VideoMode::getDesktopMode().width*3/8);
 	sf::ContextSettings settings;
 	sf::Vector2f lastMousePos;
 	bool canFullscreen = true;
@@ -36,7 +36,7 @@ private:
 	const int maxDrawPs = 60;
 	bool outputPsStat = false;
 
-	static constexpr int nCars = 1;
+	static constexpr int nCars = 10;
 	Car cars[nCars];
 	std::vector<sf::VertexArray> walls;
 

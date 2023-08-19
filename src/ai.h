@@ -7,6 +7,7 @@ class Ai
 {
 public:
 	Ai(std::vector<int> size);
+	Ai(Ai first, Ai second);
 	void calculateOutput(std::vector<double> inputs);
 
 	void setRandomValues();

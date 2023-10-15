@@ -18,6 +18,19 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\ai.cpp" />
+    <ClCompile Include="src\car.cpp" />
+    <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\layer.cpp" />
+    <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ai.h" />
+    <ClInclude Include="src\car.h" />
+    <ClInclude Include="src\game.h" />
+    <ClInclude Include="src\layer.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -132,19 +145,6 @@
       <AdditionalDependencies>sfml-graphics.lib;sfml-window.lib;sfml-system.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="ai.cpp" />
-    <ClCompile Include="car.cpp" />
-    <ClCompile Include="game.cpp" />
-    <ClCompile Include="layer.cpp" />
-    <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ai.h" />
-    <ClInclude Include="car.h" />
-    <ClInclude Include="game.h" />
-    <ClInclude Include="layer.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

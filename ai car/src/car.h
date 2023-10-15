@@ -5,26 +5,29 @@
 class Car
 {
 public:
-	Car();
-	void moveCar();
+	Car() {};
+	Car(std::vector<int> aiSize);
+
+	void updateCar(std::vector<sf::VertexArray> walls);
 	void drawCar(sf::RenderWindow& window);
+
+	void revive();
+	bool crashed = false;
+	int fitness = 0;
+	Ai* ai = NULL;
+
+private:
 
 	bool collide(std::vector<sf::VertexArray> walls);
 	sf::Vector2f vertexRect(sf::RectangleShape rect, int n);
 
 	void resetSensors();
 	void updateSensors(std::vector<sf::VertexArray> walls);
-	bool crashed = false;
 
-private:
-	Ai* ai = NULL;
 	sf::RectangleShape car;
 	sf::RectangleShape sensors[9];
 
-	static constexpr int nLayers = 3;
-	int aiSize[nLayers] = {9, 6, 3};
-
-	const int velocity = 5;
-	const int rotation = 4;
+	static constexpr int velocity = 5;
+	static constexpr int rotation = 4;
 };
 

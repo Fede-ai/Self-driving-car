@@ -9,11 +9,47 @@ Game::Game(sf::RenderWindow& inWindow)
 	:
 	window(inWindow)
 {
-	settings.antialiasingLevel = 5;
+	//create neural network structure from inputs
+	aiSizeVector.push_back(9);
+	std::cout << "input the neural network's size (enter a number to add that number of nodes in the highlighted layer, enter \"done\" to start the simulation):\n";
+	std::cout << "9, _, 3: ";
+	std::string command;
+	std::cin >> command;
+	while (command != "done")
+	{
+		char* pEnd = NULL;
+		int num = strtod(command.c_str(), &pEnd);
 
+		if (num == 0)
+		{
+			std::cout << "enter a valid value please: ";
+		}
+		else
+		{
+			aiSizeVector.push_back(num);
+			for (int i = 0; i < aiSizeVector.size(); i++)
+			{
+				std::cout << aiSizeVector[i] << ", ";
+			}
+			std::cout << "_, 3: ";
+		}
+
+		std::cin >> command;
+	}
+	std::cout << "\n";
+	aiSizeVector.push_back(3);
+
+	for (int i = 0; i < nCars; i++) 
+	{
+		cars[i] = Car(aiSizeVector);
+	}
+
+	//create window
+	settings.antialiasingLevel = 5;
 	window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
 	window.setView(sf::View(sf::Vector2f(640, 360), windowDim));
 
+	//start thread that takes console inputs
 	std::thread thread(&Game::takeConsoleInputs, this);
 	thread.detach();
 }
@@ -215,16 +251,48 @@ void Game::input()
 
 void Game::update()
 {	
+	bool areAllCrushed = true;
+
 	//handle cars
 	for (int car = 0; car < nCars; car++)
 	{
-		if (!isPaused && !cars[car].crashed)
+		if (!cars[car].crashed)
 		{
-			cars[car].moveCar();
-			cars[car].crashed = cars[car].collide(walls);
-			cars[car].resetSensors();	
-			cars[car].updateSensors(walls);
-		}			
+			areAllCrushed = false;
+			if (!isPaused)
+			{
+				cars[car].updateCar(walls);
+			}
+		}
+	}
+
+	//revive and breed
+	if (areAllCrushed == true)
+	{	
+		//find best cars
+		int best = -1;
+		int second = -1;
+		for (int i = 0; i < nCars; i++)
+		{
+			if (cars[i].fitness > best)
+			{
+				second = best;
+				best = i;
+			}
+			else if (cars[i].fitness > second)
+			{
+				second = i;
+			}
+		}
+
+		//breed
+		for (int i = 0; i < nCars; i++)
+		{
+			Ai* ai = new Ai(Ai::merge(*cars[best].ai, *cars[second].ai));
+
+			cars[i].ai = ai;
+			cars[i].revive();
+		}
 	}
 }
 

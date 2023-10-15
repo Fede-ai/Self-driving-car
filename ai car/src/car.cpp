@@ -1,13 +1,9 @@
 #include "car.h"
 
-Car::Car()
+Car::Car(std::vector<int> aiSize)
 {
-	std::vector<int> aiLayers;
-	for (int i = 0; i < nLayers; i++)
-	{
-		aiLayers.push_back(aiSize[i]);
-	}
-	ai = new Ai(aiLayers);
+	ai = new Ai(aiSize);
+	ai->setRandomValues();
 
 	car.setSize(sf::Vector2f(20, 40));
 	car.setOrigin(car.getSize().x / 2, car.getSize().y / 2);
@@ -17,20 +13,34 @@ Car::Car()
 	car.setOutlineColor(sf::Color::Black);
 }
 
-void Car::moveCar()
+void Car::updateCar(std::vector<sf::VertexArray> walls)
 {
-	//apply rotation
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+	//move sensors to current car position and extend them to size 3000
+	resetSensors();
+	//shorten the sensors based on surrounding walls
+	updateSensors(walls);
+
+	//put sensors lengths into a vector and feed them to the ai
+	std::vector<double> inputs;
+	for (int i = 0; i < 9; i++)
+	{
+		inputs.push_back(sensors[i].getSize().x);// / 3000.f);
+	}
+	ai->calculateOutput(inputs);
+
+	if (ai->getOutput(0) > ai->getOutput(1) && ai->getOutput(0) > ai->getOutput(2))
 	{
 		car.rotate(rotation);
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+	else if (ai->getOutput(2) > ai->getOutput(0) && ai->getOutput(2) > ai->getOutput(1))
 	{
 		car.rotate(-rotation);
 	}
 
-	//apply the calculated movement
+	//apply the movement
 	car.move(sf::Vector2f(sin(car.getRotation() * 3.1415 / 180) * velocity, -cos(car.getRotation() * 3.1415 / 180) * velocity));
+	crashed = collide(walls);
+	fitness++;
 }
 
 void Car::drawCar(sf::RenderWindow& window)
@@ -75,7 +85,6 @@ bool Car::collide(std::vector<sf::VertexArray> walls)
 	
 	return false;
 }
-
 //n: 0 = top-left; 1 = top-right; 2 = bot-right; 3 = bot-left
 sf::Vector2f Car::vertexRect(sf::RectangleShape rect, int n)
 {
@@ -95,6 +104,13 @@ sf::Vector2f Car::vertexRect(sf::RectangleShape rect, int n)
 
 	return (rect.getPosition() + sf::Vector2f(cos(incVertices[n] * 3.1415 / 180) * ipot / 2, -sin(incVertices[n] * 3.1415 / 180) * ipot / 2));
 }
+void Car::revive()
+{
+	car.setRotation(0);
+	car.setPosition(150, 600);
+	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
+	crashed = false;
+}
 
 void Car::resetSensors()
 {
@@ -106,7 +122,6 @@ void Car::resetSensors()
 		sensors[i].setRotation(ang);
 	}
 }
-
 void Car::updateSensors(std::vector<sf::VertexArray> walls)
 {
 	for (int sensor = 0; sensor < 9; sensor++)

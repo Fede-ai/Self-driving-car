@@ -12,7 +12,9 @@ public:
 	void setRandomValues();
 	double getOutput(int n);
 
-private:
+	static Ai merge(Ai ai1, Ai ai2);
 
+private:
+	std::vector<int> size;
 	std::vector<Layer> layers;
 };

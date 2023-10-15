@@ -32,13 +32,15 @@ private:
 	int currentUpdatePs = 0;
 	int currentDrawPs = 0;
 	const int maxInputPs = 30;
-	const int maxUpdatePs = 200;	
+	const int maxUpdatePs = 400;	
 	const int maxDrawPs = 60;
 	bool outputPsStat = false;
 
-	static constexpr int nCars = 1;
-	Car cars[nCars];
+	static constexpr int nCars = 5;
+	Car* cars = new Car[nCars];
 	std::vector<sf::VertexArray> walls;
+
+	std::vector<int> aiSizeVector;
 
 	bool isMoving = false;
 	bool isBuilding = false;

@@ -7,7 +7,8 @@ public:
 	//input layer is not a layer
 	//layer obj contains the nodes and the wheights between the nodes of this layer and the previus one
 
-	Layer(int sizeBefore, int size);
+	Layer(int inSizeBefore, int inSize);
+	Layer(Layer lyr1, Layer lyr2);
 
 	void calculateLayer(std::vector<double> neuronsBefore);
 	void setRandomLayerValues();
@@ -19,4 +20,8 @@ public:
 	std::vector<std::vector<double>> weights;
 
 	static int random(int min, int max);
+
+private:
+	int size = 0;
+	int sizeBefore = 0;
 };

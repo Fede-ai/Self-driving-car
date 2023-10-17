@@ -1,17 +1,65 @@
 #include "layer.h"
 #include <random>
 
-Layer::Layer(int sizeBefore, int size)
+Layer::Layer(int inSizeBefore, int inSize)
 {
-	for (int a = 0; a < size; a++)
+	size = inSize;
+	sizeBefore = inSizeBefore;
+
+	for (int neur = 0; neur < size; neur++)
 	{
 		neurons.push_back(0);
 		biases.push_back(0);
 
 		std::vector<double> neuronWeights;
-		for (int b = 0; b < sizeBefore; b++)
+		for (int before = 0; before < sizeBefore; before++)
 		{
 			neuronWeights.push_back(0);
+		}
+		weights.push_back(neuronWeights);
+	}
+}
+
+Layer::Layer(Layer lyr1, Layer lyr2)
+{
+	size = lyr1.neurons.size();
+	sizeBefore = lyr1.weights[0].size();
+
+	for (int neur = 0; neur < size; neur++)
+	{
+		neurons.push_back(0);
+
+		//set a "random" bias
+		int probB = Layer::random(0, 1000);
+		if (probB < 495)
+		{
+			biases.push_back(lyr1.biases[neur]);
+		}
+		else if (probB < 990)
+		{
+			biases.push_back(lyr2.biases[neur]);
+		}
+		else
+		{
+			biases.push_back(Layer::random(0, 2000) / 1000.f - 1);
+		}
+
+		std::vector<double> neuronWeights;
+		for (int before = 0; before < sizeBefore; before++)
+		{
+			int probW = Layer::random(0, 1000);
+			if (probW < 495)
+			{
+				neuronWeights.push_back(lyr1.weights[neur][before]);
+			}
+			else if (probW < 990)
+			{
+				neuronWeights.push_back(lyr2.weights[neur][before]);
+			}
+			else
+			{
+				neuronWeights.push_back(Layer::random(0, 2000) / 1000.f - 1);
+			}			
 		}
 		weights.push_back(neuronWeights);
 	}

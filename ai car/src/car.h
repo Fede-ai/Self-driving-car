@@ -5,7 +5,6 @@
 class Car
 {
 public:
-	Car() {};
 	Car(std::vector<int> aiSize);
 
 	void updateCar(std::vector<sf::VertexArray> walls);
@@ -14,7 +13,7 @@ public:
 	void revive();
 	bool crashed = false;
 	int fitness = 0;
-	Ai* ai = NULL;
+	Ai ai;
 
 private:
 

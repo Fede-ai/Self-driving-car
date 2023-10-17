@@ -36,8 +36,8 @@ private:
 	const int maxDrawPs = 60;
 	bool outputPsStat = false;
 
-	static constexpr int nCars = 5;
-	Car* cars = new Car[nCars];
+	static constexpr int nCars = 200;
+	std::vector<Car> cars;
 	std::vector<sf::VertexArray> walls;
 
 	std::vector<int> aiSizeVector;

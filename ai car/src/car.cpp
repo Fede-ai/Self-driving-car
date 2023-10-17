@@ -1,9 +1,12 @@
 #include "car.h"
+#include <iostream>
 
 Car::Car(std::vector<int> aiSize)
+	:
+	ai(aiSize)
 {
-	ai = new Ai(aiSize);
-	ai->setRandomValues();
+	//ai = new Ai(aiSize);
+	ai.setRandomValues();
 
 	car.setSize(sf::Vector2f(20, 40));
 	car.setOrigin(car.getSize().x / 2, car.getSize().y / 2);
@@ -26,13 +29,13 @@ void Car::updateCar(std::vector<sf::VertexArray> walls)
 	{
 		inputs.push_back(sensors[i].getSize().x);// / 3000.f);
 	}
-	ai->calculateOutput(inputs);
+	ai.calculateOutput(inputs);
 
-	if (ai->getOutput(0) > ai->getOutput(1) && ai->getOutput(0) > ai->getOutput(2))
+	if (ai.getOutput(0) > ai.getOutput(1) && ai.getOutput(0) > ai.getOutput(2))
 	{
 		car.rotate(rotation);
 	}
-	else if (ai->getOutput(2) > ai->getOutput(0) && ai->getOutput(2) > ai->getOutput(1))
+	else if (ai.getOutput(2) > ai.getOutput(0) && ai.getOutput(2) > ai.getOutput(1))
 	{
 		car.rotate(-rotation);
 	}

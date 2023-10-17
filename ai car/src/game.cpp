@@ -20,7 +20,7 @@ Game::Game(sf::RenderWindow& inWindow)
 		char* pEnd = NULL;
 		int num = strtod(command.c_str(), &pEnd);
 
-		if (num == 0)
+		if (num <= 0)
 		{
 			std::cout << "enter a valid value please: ";
 		}
@@ -39,9 +39,10 @@ Game::Game(sf::RenderWindow& inWindow)
 	std::cout << "\n";
 	aiSizeVector.push_back(3);
 
+	//create cars with the desired ai size
 	for (int i = 0; i < nCars; i++) 
 	{
-		cars[i] = Car(aiSizeVector);
+		cars.push_back(Car(aiSizeVector));
 	}
 
 	//create window
@@ -254,43 +255,44 @@ void Game::update()
 	bool areAllCrushed = true;
 
 	//handle cars
-	for (int car = 0; car < nCars; car++)
+	for (auto& car : cars)
 	{
-		if (!cars[car].crashed)
+		if (!car.crashed)
 		{
 			areAllCrushed = false;
 			if (!isPaused)
 			{
-				cars[car].updateCar(walls);
+				car.updateCar(walls);
 			}
 		}
 	}
 
 	//revive and breed
-	if (areAllCrushed == true)
+	if (areAllCrushed)
 	{	
-		//find best cars
-		int best = -1;
+		//find two best cars
+		int first = -1;
 		int second = -1;
-		for (int i = 0; i < nCars; i++)
+		for (int i = 0; i < cars.size(); i++)
 		{
-			if (cars[i].fitness > best)
+			if (cars[i].fitness > cars[first].fitness)
 			{
-				second = best;
-				best = i;
+				second = first;
+				first = i;
 			}
-			else if (cars[i].fitness > second)
+			else if (cars[i].fitness > cars[second].fitness)
 			{
 				second = i;
 			}
 		}
 
-		//breed
-		for (int i = 0; i < nCars; i++)
-		{
-			Ai* ai = new Ai(Ai::merge(*cars[best].ai, *cars[second].ai));
+		Ai firstAi = cars[first].ai;
+		Ai secondAi = cars[second].ai;
 
-			cars[i].ai = ai;
+		//breed and revive
+		for (int i = 0; i < cars.size(); i++)
+		{
+			cars[i].ai = Ai(firstAi, secondAi);
 			cars[i].revive();
 		}
 	}
@@ -306,9 +308,9 @@ void Game::draw()
 		window.draw(walls[a]);
 	}
 	//draw cars
-	for (int i = 0; i < nCars; i++)
+	for (auto& car : cars)
 	{
-		cars[i].drawCar(window);
+		car.drawCar(window);
 	}
 
 	window.display();

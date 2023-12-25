@@ -68,8 +68,11 @@ void Game::frame()
 	//update
 	if ((getTime() - second * 1000) / 1000.f >= (float)currentUpdatePs / maxUpdatePs)
 	{
-		update();
-		currentUpdatePs++;
+		if (!isPaused)
+		{
+			update();
+			currentUpdatePs++;
+		}
 	}
 
 	//draw
@@ -83,9 +86,8 @@ void Game::frame()
 	if (second != currentSecond)
 	{	
 		if (outputPsStat)
-		{
 			std::cout << "\tframes/sec: " << currentDrawPs << ", updates/sec: " << currentUpdatePs << ", inputs/sec: " << currentInputPs << "\n";
-		}
+
 		currentSecond = second;
 		currentInputPs = 0;
 		currentUpdatePs = 0;
@@ -260,10 +262,7 @@ void Game::update()
 		if (!car.crashed)
 		{
 			areAllCrushed = false;
-			if (!isPaused)
-			{
-				car.updateCar(walls);
-			}
+			car.updateCar(walls);
 		}
 	}
 
@@ -271,9 +270,9 @@ void Game::update()
 	if (areAllCrushed)
 	{	
 		//find two best cars
-		int first = -1;
-		int second = -1;
-		for (int i = 0; i < cars.size(); i++)
+		int first = 0;
+		int second = 1;
+		for (int i = 1; i < cars.size(); i++)
 		{
 			if (cars[i].fitness > cars[first].fitness)
 			{

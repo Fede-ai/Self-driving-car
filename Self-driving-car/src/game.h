@@ -21,6 +21,7 @@ private:
 	uint64_t getTime();
 
 	sf::RenderWindow& window;
+	std::vector<int> aiSizeVector;
 	sf::Vector2f windowDim = sf::Vector2f(1280, 720);
 	sf::ContextSettings settings;
 	sf::Vector2f lastMousePos;
@@ -33,20 +34,21 @@ private:
 	int currentDrawPs = 0;
 	const int maxInputPs = 30;
 	const int maxUpdatePs = 200;	
-	const int maxDrawPs = 60;
+	const int maxDrawPs = 60; 
 	bool outputPsStat = false;
 
-	static constexpr int nCars = 200;
+	static constexpr int nCars = 60;
 	std::vector<Car> cars;
 	std::vector<sf::VertexArray> walls;
-
-	std::vector<int> aiSizeVector;
+	std::vector<sf::VertexArray> targets;
 
 	bool isMoving = false;
-	bool isBuilding = false;
+	bool isBuildingWall = false;
+	bool isBuildingTarget = false;
 	bool isPaused = true;
 	bool canPause = false;
 	bool canDeleteWall = false;
+	bool canDeleteTarget = false;
 	bool canKillAll = false;
 	bool canRestartGen = false;
 	bool canRestartSim = false;

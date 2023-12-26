@@ -105,8 +105,10 @@ void Game::takeConsoleInputs()
 		
 		std::cout << "\nthere are also some commands which you can execute by pressing some keys while the main window has focus, here is a list of them:\n";
 		std::cout << "  -  left + mouse\t| move the camera\n";
-		std::cout << "  -  left + e + mouse\t| build walls\n";
-		std::cout << "  -  backspace\t\t| delete the last wall built\n";
+		std::cout << "  -  left + e + mouse\t| build wall\n";
+		std::cout << "  -  d\t\t\t| delete last wall\n";
+		std::cout << "  -  left + w + mouse\t| build target\n";
+		std::cout << "  -  s\t\t\t| delete last target\n";
 		std::cout << "  -  mouse wheel\t| zoom/un-zoom\n";
 		std::cout << "  -  alt + enter\t| toggle fullscreen\n";		
 		std::cout << "  -  p\t\t\t| pause/un-pause the simulation\n";
@@ -170,11 +172,11 @@ void Game::input()
 			canFullscreen = true;
 		}
 
-		//handle camera movement and walls creation
+		//handle camera movement and wall/target creation
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
 			//move camera movement
-			if (!isBuilding && !sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+			if (!isBuildingWall && !isBuildingTarget && !sf::Keyboard::isKeyPressed(sf::Keyboard::E) && !sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 			{
 				sf::View view(window.getView());
 				float x = window.getView().getSize().x / window.getSize().x;
@@ -188,12 +190,13 @@ void Game::input()
 				isMoving = false;
 			}
 
-			//handle walls creation
+			//handle wall/target creation
 			if (!isMoving)
 			{
-				if (!isBuilding)
+				//build wall
+				if (!isBuildingWall)
 				{
-					if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+					if (sf::Keyboard::isKeyPressed(sf::Keyboard::E) && !isBuildingTarget)
 					{
 						sf::VertexArray wall;
 						wall.resize(2);
@@ -204,18 +207,41 @@ void Game::input()
 						wall[1].color = sf::Color::Black;
 
 						walls.push_back(wall);
-						isBuilding = true;
+						isBuildingWall = true;
 					}
 				}
 				else
 				{
 					walls[walls.size() - 1][1].position = mouseP;
 				}
+
+				//build target
+				if (!isBuildingTarget)
+				{
+					if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && !isBuildingWall)
+					{
+						sf::VertexArray target;
+						target.resize(2);
+						target.setPrimitiveType(sf::Lines);
+						target[0].position = mouseP;
+						target[1].position = mouseP;
+						target[0].color = sf::Color::Green;
+						target[1].color = sf::Color::Green;
+
+						targets.push_back(target);
+						isBuildingTarget = true;
+					}
+				}
+				else
+				{
+					targets[targets.size() - 1][1].position = mouseP;
+				}
 			}
 		}
-		else if (isBuilding)
+		else
 		{
-			isBuilding = false;
+			isBuildingWall = false;
+			isBuildingTarget = false;
 		}
 		
 		//toggle pause
@@ -233,20 +259,33 @@ void Game::input()
 		}
 
 		//handle walls destruction
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Backspace))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
 			if (canDeleteWall)
 			{
 				if (walls.size() > 0)
-				{
 					walls.pop_back();
-				}
 				canDeleteWall = false;
 			}
 		}
 		else
 		{
 			canDeleteWall = true;
+		}
+
+		//handle targets destruction
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+		{
+			if (canDeleteTarget)
+			{
+				if (targets.size() > 0)
+					targets.pop_back();
+				canDeleteTarget = false;
+			}
+		}
+		else
+		{
+			canDeleteTarget = true;
 		}
 
 		//skip generation
@@ -309,7 +348,7 @@ void Game::update()
 		if (!car.crashed)
 		{
 			areAllCrushed = false;
-			car.updateCar(walls);
+			car.move(walls, targets);
 		}
 	}
 
@@ -336,7 +375,9 @@ void Game::update()
 		Ai secondAi = cars[second].ai;
 
 		cars[0].ai = firstAi;
+		cars[0].reset();
 		cars[1].ai = secondAi;
+		cars[1].reset();
 
 		//breed and reset
 		for (int i = 2; i < cars.size(); i++)
@@ -352,15 +393,22 @@ void Game::draw()
 	window.clear(sf::Color(130, 130, 130));
 
 	//draw walls
-	for (int a = 0; a < walls.size(); a++)
+	for (auto wall : walls)
+		window.draw(wall);
+
+	//draw walls
+	for (int i = 0; i < targets.size(); i++)
 	{
-		window.draw(walls[a]);
+		float perc = float(i) / targets.size();
+		sf::Color c = sf::Color(255.f * perc, 0, 255.f * (1.f - perc));
+		targets[i][0].color = c;
+		targets[i][1].color = c;
+		window.draw(targets[i]);
 	}
+
 	//draw cars
-	for (auto& car : cars)
-	{
-		car.drawCar(window);
-	}
+	for (auto car : cars)
+		car.draw(window);
 
 	window.display();
 }

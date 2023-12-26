@@ -7,8 +7,8 @@ class Car
 public:
 	Car(std::vector<int> aiSize);
 
-	void updateCar(std::vector<sf::VertexArray> walls);
-	void drawCar(sf::RenderWindow& window);
+	void move(std::vector<sf::VertexArray> walls, std::vector<sf::VertexArray> targets);
+	void draw(sf::RenderWindow& window);
 
 	void crash();
 	void reset();
@@ -17,8 +17,7 @@ public:
 	Ai ai;
 
 private:
-
-	bool collide(std::vector<sf::VertexArray> walls);
+	void collide(std::vector<sf::VertexArray> walls, sf::VertexArray target);
 	sf::Vector2f vertexRect(sf::RectangleShape rect, int n);
 
 	void resetSensors();
@@ -26,6 +25,7 @@ private:
 
 	sf::RectangleShape car;
 	sf::RectangleShape sensors[9];
+	int nextTarget = 0;
 
 	static constexpr int velocity = 5;
 	static constexpr int rotation = 4;

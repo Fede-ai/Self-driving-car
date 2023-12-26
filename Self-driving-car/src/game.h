@@ -32,7 +32,7 @@ private:
 	int currentUpdatePs = 0;
 	int currentDrawPs = 0;
 	const int maxInputPs = 30;
-	const int maxUpdatePs = 400;	
+	const int maxUpdatePs = 200;	
 	const int maxDrawPs = 60;
 	bool outputPsStat = false;
 
@@ -47,4 +47,7 @@ private:
 	bool isPaused = true;
 	bool canPause = false;
 	bool canDeleteWall = false;
+	bool canKillAll = false;
+	bool canRestartGen = false;
+	bool canRestartSim = false;
 };

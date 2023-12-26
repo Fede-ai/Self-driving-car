@@ -10,7 +10,8 @@ public:
 	void updateCar(std::vector<sf::VertexArray> walls);
 	void drawCar(sf::RenderWindow& window);
 
-	void revive();
+	void crash();
+	void reset();
 	bool crashed = false;
 	int fitness = 0;
 	Ai ai;

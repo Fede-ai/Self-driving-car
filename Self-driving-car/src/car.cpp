@@ -42,8 +42,11 @@ void Car::updateCar(std::vector<sf::VertexArray> walls)
 
 	//apply the movement
 	car.move(sf::Vector2f(sin(car.getRotation() * 3.1415 / 180) * velocity, -cos(car.getRotation() * 3.1415 / 180) * velocity));
-	crashed = collide(walls);
-	fitness++;
+
+	if (collide(walls))
+		crash();
+	else
+		fitness++;
 }
 
 void Car::drawCar(sf::RenderWindow& window)
@@ -79,10 +82,7 @@ bool Car::collide(std::vector<sf::VertexArray> walls)
 			float yInter = xInter * coefSide - dislocSide;
 
 			if (side.getBounds().contains(xInter, -yInter) && walls[wall].getBounds().contains(xInter, -yInter))
-			{
-				car.setFillColor(sf::Color::Black);
 				return true;
-			}
 		}
 	}
 	
@@ -107,11 +107,18 @@ sf::Vector2f Car::vertexRect(sf::RectangleShape rect, int n)
 
 	return (rect.getPosition() + sf::Vector2f(cos(incVertices[n] * 3.1415 / 180) * ipot / 2, -sin(incVertices[n] * 3.1415 / 180) * ipot / 2));
 }
-void Car::revive()
+
+void Car::crash()
+{
+	crashed = true;
+	car.setFillColor(sf::Color::Black);
+}
+void Car::reset()
 {
 	car.setRotation(0);
 	car.setPosition(150, 600);
 	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
+	fitness = 0;
 	crashed = false;
 }
 

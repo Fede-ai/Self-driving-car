@@ -41,9 +41,7 @@ Game::Game(sf::RenderWindow& inWindow)
 
 	//create cars with the desired ai size
 	for (int i = 0; i < nCars; i++) 
-	{
 		cars.push_back(Car(aiSizeVector));
-	}
 
 	//create window
 	settings.antialiasingLevel = 5;
@@ -106,12 +104,15 @@ void Game::takeConsoleInputs()
 		std::cout << "\nWARNING: some commands may output continuous information through the console, if you want to enter another command, just type it and press enter, it does not matter if the command gets split up\n";
 		
 		std::cout << "\nthere are also some commands which you can execute by pressing some keys while the main window has focus, here is a list of them:\n";
-		std::cout << "  -  left click + move mouse\t\tmove the camera\n";
-		std::cout << "  -  left click + e + move mouse\tcreate wall, release mouse to stop building\n";
-		std::cout << "  -  backspace\t\t\t\tdelete the last wall created\n";
-		std::cout << "  -  mouse wheel\t\t\tzoom/un-zoom\n";
-		std::cout << "  -  alt + enter\t\t\ttoggle fullscreen\n";		
-		std::cout << "  -  p\t\t\t\t\tpause/un-pause the simulation\n\n";
+		std::cout << "  -  left + mouse\t| move the camera\n";
+		std::cout << "  -  left + e + mouse\t| build walls\n";
+		std::cout << "  -  backspace\t\t| delete the last wall built\n";
+		std::cout << "  -  mouse wheel\t| zoom/un-zoom\n";
+		std::cout << "  -  alt + enter\t| toggle fullscreen\n";		
+		std::cout << "  -  p\t\t\t| pause/un-pause the simulation\n";
+		std::cout << "  -  q\t\t\t| crash all cars\n";
+		std::cout << "  -  r\t\t\t| restart the generation\n";
+		std::cout << "  -  n\t\t\t| restart the simulation\n\n";
 	};
 
 	help();
@@ -144,7 +145,7 @@ void Game::input()
 
 	if (window.hasFocus())
 	{
-		//handle fullscreen
+		//toggle fullscreen
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
 		{
 			if (canFullscreen)
@@ -217,7 +218,7 @@ void Game::input()
 			isBuilding = false;
 		}
 		
-		//handle pause
+		//toggle pause
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
 		{
 			if (canPause)
@@ -247,6 +248,52 @@ void Game::input()
 		{
 			canDeleteWall = true;
 		}
+
+		//skip generation
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+		{
+			if (canKillAll)
+			{
+				for (auto& car : cars)
+					car.crash();
+			}
+			canKillAll = false;
+		}
+		else
+		{
+			canKillAll = true;
+		}
+
+		//restart generation
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+		{
+			if (canRestartGen)
+			{
+				for (auto& car : cars)
+					car.reset();
+			}
+			canRestartGen = false;
+		}
+		else
+		{
+			canRestartGen = true;
+		}
+
+		//restart simulation
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::N))
+		{
+			if (canRestartSim)
+			{
+				cars.clear();
+				for (int i = 0; i < nCars; i++)
+					cars.push_back(Car(aiSizeVector));
+			}
+			canRestartSim = false;
+		}
+		else
+		{
+			canRestartSim = true;
+		}
 	}
 
 	lastMousePos = mousePos;
@@ -266,7 +313,7 @@ void Game::update()
 		}
 	}
 
-	//revive and breed
+	//reset and breed
 	if (areAllCrushed)
 	{	
 		//find two best cars
@@ -288,11 +335,14 @@ void Game::update()
 		Ai firstAi = cars[first].ai;
 		Ai secondAi = cars[second].ai;
 
-		//breed and revive
-		for (int i = 0; i < cars.size(); i++)
+		cars[0].ai = firstAi;
+		cars[1].ai = secondAi;
+
+		//breed and reset
+		for (int i = 2; i < cars.size(); i++)
 		{
 			cars[i].ai = Ai(firstAi, secondAi);
-			cars[i].revive();
+			cars[i].reset();
 		}
 	}
 }

@@ -10,7 +10,7 @@ Car::Car(std::vector<int> aiSize)
 
 	car.setSize(sf::Vector2f(20, 40));
 	car.setOrigin(car.getSize().x / 2, car.getSize().y / 2);
-	car.setPosition(150, 600);
+	car.setPosition(0, 0);
 	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
 	car.setOutlineThickness(-2);
 	car.setOutlineColor(sf::Color::Black);
@@ -130,7 +130,7 @@ void Car::crash()
 void Car::reset()
 {
 	car.setRotation(0);
-	car.setPosition(150, 600);
+	car.setPosition(0, 0);
 	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
 	fitness = 0;
 	nextTarget = 0;

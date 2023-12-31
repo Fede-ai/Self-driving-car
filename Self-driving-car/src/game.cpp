@@ -46,7 +46,7 @@ Game::Game(sf::RenderWindow& inWindow)
 	//create window
 	settings.antialiasingLevel = 5;
 	window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
-	window.setView(sf::View(sf::Vector2f(640, 360), windowDim));
+	window.setView(sf::View(sf::Vector2f(0, 0), windowDim));
 
 	//start thread that takes console inputs
 	std::thread thread(&Game::takeConsoleInputs, this);
@@ -153,7 +153,6 @@ void Game::input()
 			if (canFullscreen)
 			{
 				sf::View view(window.getView());
-
 				if (isFullscreen)
 				{
 					window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
@@ -370,6 +369,8 @@ void Game::update()
 				second = i;
 			}
 		}
+
+		std::cout << "last best: " << cars[0].fitness << "best: " << cars[first].fitness << "\n";
 
 		Ai firstAi = cars[first].ai;
 		Ai secondAi = cars[second].ai;

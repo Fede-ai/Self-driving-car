@@ -42,12 +42,12 @@ void Car::move(std::vector<sf::VertexArray> walls, std::vector<sf::VertexArray> 
 
 	//apply the movement
 	car.move(sf::Vector2f(sin(car.getRotation() * 3.1415 / 180) * velocity, -cos(car.getRotation() * 3.1415 / 180) * velocity));
+	
+	if (nextTarget >= targets.size())
+		nextTarget = 0;
 
 	//collide with walls/target
 	collide(walls, targets[nextTarget]);
-
-	if (nextTarget == targets.size())
-		nextTarget = 0;
 }
 
 void Car::draw(sf::RenderWindow& window)

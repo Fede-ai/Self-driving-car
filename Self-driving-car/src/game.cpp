@@ -108,7 +108,7 @@ void Game::takeConsoleInputs()
 		std::cout << "  -  left + e + mouse\t| build wall\n";
 		std::cout << "  -  d\t\t\t| delete last wall\n";
 		std::cout << "  -  left + w + mouse\t| build target\n";
-		std::cout << "  -  s\t\t\t| delete last target\n";
+		std::cout << "  -  s\t\t\t| delete last target (only when paused)\n";
 		std::cout << "  -  mouse wheel\t| zoom/un-zoom\n";
 		std::cout << "  -  alt + enter\t| toggle fullscreen\n";		
 		std::cout << "  -  p\t\t\t| pause/un-pause the simulation\n";
@@ -246,7 +246,7 @@ void Game::input()
 		//toggle pause
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
 		{
-			if (canPause)
+			if (canPause && targets.size() > 0)
 			{
 				isPaused = !isPaused;
 				canPause = false;
@@ -275,12 +275,12 @@ void Game::input()
 		//handle targets destruction
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			if (canDeleteTarget)
+			if (canDeleteTarget && isPaused)
 			{
 				if (targets.size() > 0)
 					targets.pop_back();
-				canDeleteTarget = false;
 			}
+			canDeleteTarget = false;
 		}
 		else
 		{
@@ -370,7 +370,8 @@ void Game::update()
 			}
 		}
 
-		std::cout << "last best: " << cars[0].fitness << "best: " << cars[first].fitness << "\n";
+		auto b = cars[first].fitness;
+		std::cout << "best car got " << b << " targets, " << float(b)/targets.size() << " laps (one lap = " << targets.size() << " targets)\n";
 
 		Ai firstAi = cars[first].ai;
 		Ai secondAi = cars[second].ai;

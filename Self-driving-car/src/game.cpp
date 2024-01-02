@@ -56,37 +56,39 @@ Game::Game(sf::RenderWindow& inWindow)
 void Game::frame()
 {
 	//take inputs
-	uint64_t second = getTime() / 1000;
-	if ((getTime() - second * 1000) / 1000.f >= (float)currentInputPs / maxInputPs)
+	if (getTime() - timeLastInput >= 1000.f / maxInputPs)
 	{
 		input();
 		currentInputPs++;
+		timeLastInput = getTime();
 	}
 
 	//update
-	if ((getTime() - second * 1000) / 1000.f >= (float)currentUpdatePs / maxUpdatePs)
+	if ((getTime() - getTime() / 1000 * 1000) / 1000.f >= (float)currentUpdatePs / maxUpdatePs)
 	{
 		if (!isPaused)
 		{
 			update();
 			currentUpdatePs++;
+			timeLastUpdate = getTime();
 		}
 	}
 
 	//draw
-	if ((getTime() - second * 1000) / 1000.f >= (float)currentDrawPs / maxDrawPs)
+	if (getTime() - timeLastDraw >= 1000.f / maxDrawPs)
 	{
 		draw();
 		currentDrawPs++;
+		timeLastDraw = getTime();
 	}
 
 	//output and reset ps stats
-	if (second != currentSecond)
+	if (uint64_t(getTime() / 1000) != currentSecond)
 	{	
 		if (outputPsStat)
 			std::cout << "\tframes/sec: " << currentDrawPs << ", updates/sec: " << currentUpdatePs << ", inputs/sec: " << currentInputPs << "\n";
 
-		currentSecond = second;
+		currentSecond = getTime() / 1000;
 		currentInputPs = 0;
 		currentUpdatePs = 0;
 		currentDrawPs = 0;
@@ -100,6 +102,7 @@ void Game::takeConsoleInputs()
 		std::cout << "hi dude, here is a list of the commands you can enter through this console, any string that does not coincide with any of this commands will be ignored:\n";
 		std::cout << "  -  help\t\t\t\tmakes this message pop up\n";
 		std::cout << "  -  psstats\t\t\t\ttoggles the output of \'per second\'-related stats\n";
+		std::cout << "  -  best\t\t\t\ttoggles the output of each generation's best car performance\n";
 		
 		std::cout << "\nWARNING: some commands may output continuous information through the console, if you want to enter another command, just type it and press enter, it does not matter if the command gets split up\n";
 		
@@ -132,6 +135,9 @@ void Game::takeConsoleInputs()
 			break;
 		case str2int("psstats"):
 			outputPsStat = !outputPsStat;
+			break;
+		case str2int("best"):
+			outputBest = !outputBest;
 			break;
 		default:
 			break;
@@ -250,6 +256,9 @@ void Game::input()
 			{
 				isPaused = !isPaused;
 				canPause = false;
+
+				if (!isPaused)
+					currentUpdatePs = (getTime() - getTime() / 1000 * 1000) / 1000.f * maxUpdatePs;
 			}
 		}
 		else
@@ -371,7 +380,8 @@ void Game::update()
 		}
 
 		auto b = cars[first].fitness;
-		std::cout << "best car got " << b << " targets, " << float(b)/targets.size() << " laps (one lap = " << targets.size() << " targets)\n";
+		if (outputBest)
+			std::cout << "best car got " << b << " targets, " << float(b)/targets.size() << " laps (one lap = " << targets.size() << " targets)\n";
 
 		Ai firstAi = cars[first].ai;
 		Ai secondAi = cars[second].ai;

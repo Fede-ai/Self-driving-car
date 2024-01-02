@@ -26,19 +26,13 @@ void Car::move(std::vector<sf::VertexArray> walls, std::vector<sf::VertexArray> 
 	//put sensors lengths into a vector and feed them to the ai
 	std::vector<double> inputs;
 	for (int i = 0; i < 9; i++)
-	{
-		inputs.push_back(sensors[i].getSize().x);// / 3000.f);
-	}
+		inputs.push_back(sensors[i].getSize().x);
 	ai.calculateOutput(inputs);
 
 	if (ai.getOutput(0) > ai.getOutput(1) && ai.getOutput(0) > ai.getOutput(2))
-	{
 		car.rotate(rotation);
-	}
 	else if (ai.getOutput(2) > ai.getOutput(0) && ai.getOutput(2) > ai.getOutput(1))
-	{
 		car.rotate(-rotation);
-	}
 
 	//apply the movement
 	car.move(sf::Vector2f(sin(car.getRotation() * 3.1415 / 180) * velocity, -cos(car.getRotation() * 3.1415 / 180) * velocity));
@@ -54,10 +48,8 @@ void Car::draw(sf::RenderWindow& window)
 {	
 	window.draw(car);
 
-	for (int i = 0; i < 9; i++)
-	{
-		//window.draw(sensors[i]);
-	}
+	//for (int i = 0; i < 9; i++)
+	//	window.draw(sensors[i]);
 }
 
 void Car::collide(std::vector<sf::VertexArray> walls, sf::VertexArray target)

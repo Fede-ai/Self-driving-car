@@ -33,11 +33,15 @@ private:
 	int currentUpdatePs = 0;
 	int currentDrawPs = 0;
 	const int maxInputPs = 30;
-	const int maxUpdatePs = 200;	
-	const int maxDrawPs = 60; 
+	const int maxUpdatePs = 200;
+	const int maxDrawPs = 30;
+	uint64_t timeLastInput = getTime();
+	uint64_t timeLastUpdate = getTime();
+	uint64_t timeLastDraw = getTime();
 	bool outputPsStat = false;
+	bool outputBest = false;
 
-	static constexpr int nCars = 100;
+	static constexpr int nCars = 50;
 	std::vector<Car> cars;
 	std::vector<sf::VertexArray> walls;
 	std::vector<sf::VertexArray> targets;

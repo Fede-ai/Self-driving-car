@@ -41,6 +41,9 @@ private:
 	bool outputPsStat = false;
 	bool outputBest = false;
 
+	uint64_t timeStartGeneration = getTime();
+	uint64_t timeGeneration = 0;
+
 	static constexpr int nCars = 50;
 	std::vector<Car> cars;
 	std::vector<sf::VertexArray> walls;

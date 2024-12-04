@@ -265,8 +265,12 @@ void Game::input()
 				isPaused = !isPaused;
 				canPause = false;
 
-				if (!isPaused)
+				if (!isPaused) {
 					currentUpdatePs = (getTime() - getTime() / 1000 * 1000) / 1000.f * maxUpdatePs;
+					timeStartGeneration = getTime();
+				}
+				if (isPaused) 
+					timeGeneration += getTime() - timeStartGeneration;
 			}
 		}
 		else
@@ -322,6 +326,8 @@ void Game::input()
 		//restart generation
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
 		{
+			timeStartGeneration = getTime();
+			timeGeneration = 0;
 			if (canRestartGen)
 			{
 				for (auto& car : cars)
@@ -339,6 +345,8 @@ void Game::input()
 		{
 			if (canRestartSim)
 			{
+				timeStartGeneration = getTime();
+				timeGeneration = 0;
 				cars.clear();
 				for (int i = 0; i < nCars; i++)
 					cars.push_back(Car(aiSizeVector));
@@ -387,9 +395,16 @@ void Game::update()
 			}
 		}
 
-		auto b = cars[first].fitness;
-		if (outputBest)
-			std::cout << "best car got " << b << " targets, " << float(b)/targets.size() << " laps (one lap = " << targets.size() << " targets)\n";
+		timeGeneration += getTime() - timeStartGeneration;
+		if (outputBest) {
+			float best = cars[first].fitness;
+			float sec = timeGeneration / 1000.f;
+			float laps = best / targets.size();
+			std::cout << "best car got " << best << " targets (" << laps << " laps) in ";
+			std::cout << sec << " seconds (" << sec / laps << " seconds per lap)\n";
+		}
+		timeStartGeneration = getTime();
+		timeGeneration = 0;
 
 		Ai firstAi = cars[first].ai;
 		Ai secondAi = cars[second].ai;

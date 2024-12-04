@@ -218,6 +218,10 @@ void Game::input()
 				else
 				{
 					walls[walls.size() - 1][1].position = mouseP;
+					if (mouseP.x == walls[walls.size() - 1][0].position.x)
+						walls[walls.size() - 1][1].position.x += 1;
+					if (mouseP.y == walls[walls.size() - 1][0].position.y)
+						walls[walls.size() - 1][1].position.y += 1;
 				}
 
 				//build target
@@ -240,6 +244,10 @@ void Game::input()
 				else
 				{
 					targets[targets.size() - 1][1].position = mouseP;
+					if (mouseP.x == targets[targets.size() - 1][0].position.x)
+						targets[targets.size() - 1][1].position.x += 1;
+					if (mouseP.y == targets[targets.size() - 1][0].position.y)
+						targets[targets.size() - 1][1].position.y += 1;
 				}
 			}
 		}
@@ -269,7 +277,7 @@ void Game::input()
 		//handle walls destruction
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
-			if (canDeleteWall)
+			if (canDeleteWall && isPaused && !isBuildingWall)
 			{
 				if (walls.size() > 0)
 					walls.pop_back();
@@ -284,7 +292,7 @@ void Game::input()
 		//handle targets destruction
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		{
-			if (canDeleteTarget && isPaused)
+			if (canDeleteTarget && isPaused && !isBuildingTarget)
 			{
 				if (targets.size() > 0)
 					targets.pop_back();

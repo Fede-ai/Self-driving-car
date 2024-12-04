@@ -117,7 +117,7 @@ sf::Vector2f Car::vertexRect(sf::RectangleShape rect, int n)
 void Car::crash()
 {
 	crashed = true;
-	car.setFillColor(sf::Color::Black);
+	car.setFillColor(sf::Color(0, 0, 0, 50));
 }
 void Car::reset()
 {

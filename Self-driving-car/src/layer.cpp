@@ -22,8 +22,8 @@ Layer::Layer(int inSizeBefore, int inSize)
 
 Layer::Layer(Layer lyr1, Layer lyr2)
 {
-	size = lyr1.neurons.size();
-	sizeBefore = lyr1.weights[0].size();
+	size = int(lyr1.neurons.size());
+	sizeBefore = int(lyr1.weights[0].size());
 
 	for (int neur = 0; neur < size; neur++)
 	{

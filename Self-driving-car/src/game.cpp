@@ -1,4 +1,5 @@
 #include "game.h"
+#include <chrono>
 
 constexpr unsigned int str2int(const char* str, int h = 0)
 {
@@ -9,35 +10,11 @@ Game::Game(sf::RenderWindow& inWindow)
 	:
 	window(inWindow)
 {
-	//create neural network structure from inputs
-	aiSizeVector.push_back(9);
-	std::cout << "input the neural network's size (enter a number to add that number of nodes in the highlighted layer, enter \"done\" to start the simulation):\n";
-	std::cout << "9, _, 3: ";
-	std::string command;
-	std::cin >> command;
-	while (command != "done")
-	{
-		char* pEnd = NULL;
-		int num = strtod(command.c_str(), &pEnd);
-
-		if (num <= 0)
-		{
-			std::cout << "enter a valid value please: ";
-		}
-		else
-		{
-			aiSizeVector.push_back(num);
-			for (int i = 0; i < aiSizeVector.size(); i++)
-			{
-				std::cout << aiSizeVector[i] << ", ";
-			}
-			std::cout << "_, 3: ";
-		}
-
-		std::cin >> command;
-	}
-	std::cout << "\n";
-	aiSizeVector.push_back(3);
+	userCar.setSize(sf::Vector2f(40, 20));
+	userCar.setOrigin(userCar.getSize().x / 2, userCar.getSize().y / 2);
+	userCar.setFillColor(sf::Color(200, 200, 200));
+	userCar.setOutlineThickness(-2);
+	userCar.setOutlineColor(sf::Color(200, 20, 20));
 
 	//create cars with the desired ai size
 	for (int i = 0; i < nCars; i++) 
@@ -46,7 +23,7 @@ Game::Game(sf::RenderWindow& inWindow)
 	//create window
 	settings.antialiasingLevel = 5;
 	window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
-	window.setView(sf::View(sf::Vector2f(0, 0), windowDim));
+	window.setView(sf::View(sf::Vector2f(0, 0), sf::Vector2f(windowDim)));
 
 	//start thread that takes console inputs
 	std::thread thread(&Game::takeConsoleInputs, this);
@@ -151,233 +128,242 @@ void Game::input()
 	sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition());
 	sf::Vector2f mouseP = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-	if (window.hasFocus())
-	{
-		//toggle fullscreen
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
-		{
-			if (canFullscreen)
-			{
-				sf::View view(window.getView());
-				if (isFullscreen)
-				{
-					window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
-				}
-				else
-				{
-					window.create(sf::VideoMode::getDesktopMode(), "Game", sf::Style::Fullscreen, settings);
-				}
-				window.setView(view);
-				isFullscreen = !isFullscreen;
-			}
-			canFullscreen = false;
-		}
-		else
-		{
-			canFullscreen = true;
-		}
+	if (!window.hasFocus()) {
+		lastMousePos = mousePos;
+		return;
+	}
 
-		//handle camera movement and wall/target creation
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+	//toggle fullscreen
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter))
+	{
+		if (canFullscreen)
 		{
-			//move camera movement
-			if (!isBuildingWall && !isBuildingTarget && !sf::Keyboard::isKeyPressed(sf::Keyboard::E) && !sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+			sf::View view(window.getView());
+			if (isFullscreen)
 			{
-				sf::View view(window.getView());
-				float x = window.getView().getSize().x / window.getSize().x;
-				float y = window.getView().getSize().y / window.getSize().y;
-				view.move((lastMousePos - mousePos).x * x, (lastMousePos - mousePos).y * y);
-				window.setView(view);
-				isMoving = true;
+				window.create(sf::VideoMode(windowDim.x, windowDim.y), "Game", sf::Style::Default, settings);
 			}
 			else
 			{
-				isMoving = false;
+				window.create(sf::VideoMode::getDesktopMode(), "Game", sf::Style::Fullscreen, settings);
 			}
+			window.setView(view);
+			isFullscreen = !isFullscreen;
+		}
+		canFullscreen = false;
+	}
+	else
+		canFullscreen = true;
 
-			//handle wall/target creation
-			if (!isMoving)
+	//handle camera movement and wall/target creation
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+	{
+		//move camera movement
+		if (!isBuildingWall && !isBuildingTarget && !sf::Keyboard::isKeyPressed(sf::Keyboard::E) && !sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+		{
+			sf::View view(window.getView());
+			float x = window.getView().getSize().x / window.getSize().x;
+			float y = window.getView().getSize().y / window.getSize().y;
+			view.move((lastMousePos - mousePos).x * x, (lastMousePos - mousePos).y * y);
+			window.setView(view);
+			isMoving = true;
+		}
+		else
+		{
+			isMoving = false;
+		}
+
+		//handle wall/target creation
+		if (!isMoving)
+		{
+			//build wall
+			if (!isBuildingWall)
 			{
-				//build wall
-				if (!isBuildingWall)
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::E) && !isBuildingTarget)
 				{
-					if (sf::Keyboard::isKeyPressed(sf::Keyboard::E) && !isBuildingTarget)
-					{
-						sf::VertexArray wall;
-						wall.resize(2);
-						wall.setPrimitiveType(sf::Lines);
-						wall[0].position = mouseP;
-						wall[1].position = mouseP;
-						wall[0].color = sf::Color::Black;
-						wall[1].color = sf::Color::Black;
+					sf::VertexArray wall;
+					wall.resize(2);
+					wall.setPrimitiveType(sf::Lines);
+					wall[0].position = mouseP;
+					wall[1].position = mouseP;
+					wall[0].color = sf::Color::Black;
+					wall[1].color = sf::Color::Black;
 
-						walls.push_back(wall);
-						isBuildingWall = true;
-					}
+					walls.push_back(wall);
+					isBuildingWall = true;
 				}
-				else
+			}
+			else
+			{
+				walls[walls.size() - 1][1].position = mouseP;
+				if (mouseP.x == walls[walls.size() - 1][0].position.x)
+					walls[walls.size() - 1][1].position.x += 1;
+				if (mouseP.y == walls[walls.size() - 1][0].position.y)
+					walls[walls.size() - 1][1].position.y += 1;
+			}
+
+			//build target
+			if (!isBuildingTarget)
+			{
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && !isBuildingWall)
 				{
-					walls[walls.size() - 1][1].position = mouseP;
-					if (mouseP.x == walls[walls.size() - 1][0].position.x)
-						walls[walls.size() - 1][1].position.x += 1;
-					if (mouseP.y == walls[walls.size() - 1][0].position.y)
-						walls[walls.size() - 1][1].position.y += 1;
-				}
+					sf::VertexArray target;
+					target.resize(2);
+					target.setPrimitiveType(sf::Lines);
+					target[0].position = mouseP;
+					target[1].position = mouseP;
+					target[0].color = sf::Color::Green;
+					target[1].color = sf::Color::Green;
 
-				//build target
-				if (!isBuildingTarget)
-				{
-					if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) && !isBuildingWall)
-					{
-						sf::VertexArray target;
-						target.resize(2);
-						target.setPrimitiveType(sf::Lines);
-						target[0].position = mouseP;
-						target[1].position = mouseP;
-						target[0].color = sf::Color::Green;
-						target[1].color = sf::Color::Green;
-
-						targets.push_back(target);
-						isBuildingTarget = true;
-					}
-				}
-				else
-				{
-					targets[targets.size() - 1][1].position = mouseP;
-					if (mouseP.x == targets[targets.size() - 1][0].position.x)
-						targets[targets.size() - 1][1].position.x += 1;
-					if (mouseP.y == targets[targets.size() - 1][0].position.y)
-						targets[targets.size() - 1][1].position.y += 1;
+					targets.push_back(target);
+					isBuildingTarget = true;
 				}
 			}
-		}
-		else
-		{
-			isBuildingWall = false;
-			isBuildingTarget = false;
-		}
-		
-		//toggle pause
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-		{
-			if (canPause && targets.size() > 0)
+			else
 			{
-				isPaused = !isPaused;
-				canPause = false;
-
-				if (!isPaused) {
-					currentUpdatePs = (getTime() - getTime() / 1000 * 1000) / 1000.f * maxUpdatePs;
-					timeStartGeneration = getTime();
-				}
-				if (isPaused) 
-					timeGeneration += getTime() - timeStartGeneration;
+				targets[targets.size() - 1][1].position = mouseP;
+				if (mouseP.x == targets[targets.size() - 1][0].position.x)
+					targets[targets.size() - 1][1].position.x += 1;
+				if (mouseP.y == targets[targets.size() - 1][0].position.y)
+					targets[targets.size() - 1][1].position.y += 1;
 			}
 		}
-		else
+	}
+	else
+	{
+		isBuildingWall = false;
+		isBuildingTarget = false;
+	}
+	
+	//toggle pause
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
+	{
+		if (canPause && targets.size() > 0)
 		{
-			canPause = true;
-		}
+			isPaused = !isPaused;
+			canPause = false;
 
-		//handle walls destruction
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-		{
-			if (canDeleteWall && isPaused && !isBuildingWall)
-			{
-				if (walls.size() > 0)
-					walls.pop_back();
-				canDeleteWall = false;
+			if (!isPaused) {
+				currentUpdatePs = int((getTime() - getTime() / 1000 * 1000) / 1000.f * maxUpdatePs);
+				timeStartGeneration = getTime();
 			}
+			if (isPaused) 
+				timeGeneration += getTime() - timeStartGeneration;
 		}
-		else
-		{
-			canDeleteWall = true;
-		}
+	}
+	else
+		canPause = true;
 
-		//handle targets destruction
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+	//handle walls destruction
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+	{
+		if (canDeleteWall && isPaused && !isBuildingWall)
 		{
-			if (canDeleteTarget && isPaused && !isBuildingTarget)
-			{
-				if (targets.size() > 0)
-					targets.pop_back();
-			}
-			canDeleteTarget = false;
+			if (walls.size() > 0)
+				walls.pop_back();
+			canDeleteWall = false;
 		}
-		else
-		{
-			canDeleteTarget = true;
-		}
+	}
+	else
+		canDeleteWall = true;
 
-		//skip generation
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+	//handle targets destruction
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+	{
+		if (canDeleteTarget && isPaused && !isBuildingTarget)
 		{
-			if (canKillAll)
-			{
-				for (auto& car : cars)
-					car.crash();
-			}
-			canKillAll = false;
+			if (targets.size() > 0)
+				targets.pop_back();
 		}
-		else
-		{
-			canKillAll = true;
-		}
+		canDeleteTarget = false;
+	}
+	else
+		canDeleteTarget = true;
 
-		//restart generation
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+	//skip generation
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+	{
+		if (canKillAll)
+		{
+			for (auto& car : cars)
+				car.crash();
+		}
+		canKillAll = false;
+	}
+	else
+		canKillAll = true;
+
+	//restart generation
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+	{
+		timeStartGeneration = getTime();
+		timeGeneration = 0;
+		if (canRestartGen)
+		{
+			for (auto& car : cars)
+				car.reset();
+		}
+		canRestartGen = false;
+	}
+	else
+		canRestartGen = true;
+
+	//restart simulation
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::N))
+	{
+		if (canRestartSim)
 		{
 			timeStartGeneration = getTime();
 			timeGeneration = 0;
-			if (canRestartGen)
-			{
-				for (auto& car : cars)
-					car.reset();
-			}
-			canRestartGen = false;
+			cars.clear();
+			for (int i = 0; i < nCars; i++)
+				cars.push_back(Car(aiSizeVector));
 		}
-		else
-		{
-			canRestartGen = true;
-		}
-
-		//restart simulation
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::N))
-		{
-			if (canRestartSim)
-			{
-				timeStartGeneration = getTime();
-				timeGeneration = 0;
-				cars.clear();
-				for (int i = 0; i < nCars; i++)
-					cars.push_back(Car(aiSizeVector));
-			}
-			canRestartSim = false;
-		}
-		else
-		{
-			canRestartSim = true;
-		}
+		canRestartSim = false;
 	}
+	else
+		canRestartSim = true;
 
 	lastMousePos = mousePos;
 }
 
 void Game::update()
 {	
-	bool areAllCrushed = true;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+		userCar.rotate(-Car::steer);
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+		userCar.rotate(Car::steer);
+
+	float ang = userCar.getRotation() * 3.1415f / 180.f;
+	sf::Vector2f forward(cos(ang), sin(ang));
+	userCarVDir = Car::driftFactor * userCarVDir + (1 - Car::driftFactor) * forward;
+	userCarVDir /= std::sqrt(userCarVDir.x * userCarVDir.x + userCarVDir.y * userCarVDir.y);
+	//userCar.move(userCarVDir * Car::speed);
+
+	float parallel = userCarVDir.x * forward.x + userCarVDir.y * forward.y;
+	float perpendicular = userCarVDir.x * forward.y - userCarVDir.y * forward.x;
+	std::cout << parallel << ", " << perpendicular << "\n";
+
+	bool endGen = true;
 
 	//handle cars
 	for (auto& car : cars)
 	{
 		if (!car.crashed)
 		{
-			areAllCrushed = false;
+			endGen = false;
 			car.move(walls, targets);
+
+			if (car.fitness >= targets.size() * 5) 
+			{
+				endGen = true;
+				break;
+			}
 		}
 	}
 
 	//reset and breed
-	if (areAllCrushed)
+	if (endGen)
 	{	
 		//find two best cars
 		int first = 0;
@@ -397,9 +383,9 @@ void Game::update()
 
 		timeGeneration += getTime() - timeStartGeneration;
 		if (outputBest) {
-			float best = cars[first].fitness;
+			int best = cars[first].fitness;
 			float sec = timeGeneration / 1000.f;
-			float laps = best / targets.size();
+			float laps = float(best) / targets.size();
 			std::cout << "best car got " << best << " targets (" << laps << " laps) in ";
 			std::cout << sec << " seconds (" << sec / laps << " seconds per lap)\n";
 		}
@@ -411,11 +397,9 @@ void Game::update()
 
 		cars[0].ai = firstAi;
 		cars[0].reset();
-		cars[1].ai = secondAi;
-		cars[1].reset();
 
 		//breed and reset
-		for (int i = 2; i < cars.size(); i++)
+		for (int i = 1; i < cars.size(); i++)
 		{
 			cars[i].ai = Ai(firstAi, secondAi);
 			cars[i].reset();
@@ -435,14 +419,16 @@ void Game::draw()
 	for (int i = 0; i < targets.size(); i++)
 	{
 		float perc = float(i) / targets.size();
-		sf::Color c = sf::Color(255.f * perc, 0, 255.f * (1.f - perc));
+		sf::Color c = sf::Color(sf::Uint8(255.f * perc), 0, sf::Uint8(255.f * (1.f - perc)));
 		targets[i][0].color = c;
 		targets[i][1].color = c;
 		window.draw(targets[i]);
 	}
 
+	window.draw(userCar);
+
 	//draw cars
-	for (auto car : cars)
+	for (const auto& car : cars)
 		car.draw(window);
 
 	window.display();

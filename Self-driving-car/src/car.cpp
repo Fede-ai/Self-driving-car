@@ -5,12 +5,10 @@ Car::Car(std::vector<int> aiSize)
 	:
 	ai(aiSize)
 {
-	//ai = new Ai(aiSize);
 	ai.setRandomValues();
 
-	car.setSize(sf::Vector2f(20, 40));
+	car.setSize(sf::Vector2f(40, 20));
 	car.setOrigin(car.getSize().x / 2, car.getSize().y / 2);
-	car.setPosition(0, 0);
 	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
 	car.setOutlineThickness(-2);
 	car.setOutlineColor(sf::Color::Black);
@@ -23,19 +21,30 @@ void Car::move(std::vector<sf::VertexArray> walls, std::vector<sf::VertexArray> 
 	//shorten the sensors based on surrounding walls
 	updateSensors(walls);
 
+	float ang = car.getRotation() * 3.1415f / 180.f;
+	sf::Vector2f forward(cos(ang), sin(ang));
+
 	//put sensors lengths into a vector and feed them to the ai
 	std::vector<double> inputs;
 	for (int i = 0; i < 9; i++)
-		inputs.push_back(sensors[i].getSize().x);
+		inputs.push_back(sensors[i].getSize().x / 100.f);
+
+	double parallel = vDir.x * forward.x + vDir.y * forward.y;
+	double perpendicular = vDir.x * forward.y - vDir.y * forward.x;
+
+	inputs.push_back(parallel);
+	inputs.push_back(perpendicular);
 	ai.calculateOutput(inputs);
 
-	if (ai.getOutput(0) > ai.getOutput(1) && ai.getOutput(0) > ai.getOutput(2))
-		car.rotate(rotation);
-	else if (ai.getOutput(2) > ai.getOutput(0) && ai.getOutput(2) > ai.getOutput(1))
-		car.rotate(-rotation);
+	if (ai.getOutput(0) >= ai.getOutput(2) && ai.getOutput(0) >= ai.getOutput(1))
+		car.rotate(-steer);
+	if (ai.getOutput(2) > ai.getOutput(0) && ai.getOutput(2) >= ai.getOutput(1))
+		car.rotate(steer);
 
-	//apply the movement
-	car.move(sf::Vector2f(sin(car.getRotation() * 3.1415 / 180) * velocity, -cos(car.getRotation() * 3.1415 / 180) * velocity));
+	vDir = driftFactor * vDir + (1 - driftFactor) * forward;
+	vDir /= std::sqrt(vDir.x * vDir.x + vDir.y * vDir.y);
+
+	car.move(vDir * speed);
 	
 	if (nextTarget >= targets.size())
 		nextTarget = 0;
@@ -44,7 +53,7 @@ void Car::move(std::vector<sf::VertexArray> walls, std::vector<sf::VertexArray> 
 	collide(walls, targets[nextTarget]);
 }
 
-void Car::draw(sf::RenderWindow& window)
+void Car::draw(sf::RenderWindow& window) const
 {	
 	window.draw(car);
 
@@ -66,7 +75,6 @@ void Car::collide(std::vector<sf::VertexArray> walls, sf::VertexArray target)
 		float coefSide = -(side[0].position.y - side[1].position.y) / (side[0].position.x - side[1].position.x);
 		float dislocSide = side[0].position.y + coefSide * side[0].position.x;
 
-
 		//calculate target info
 		float coefTarget = -(target[0].position.y - target[1].position.y) / (target[0].position.x - target[1].position.x);
 		float dislocTarget = target[0].position.y + coefTarget * target[0].position.x;
@@ -80,7 +88,7 @@ void Car::collide(std::vector<sf::VertexArray> walls, sf::VertexArray target)
 			gotTarget = true;
 		}
 
-		for (auto wall : walls)
+		for (const auto& wall : walls)
 		{
 			//calculate wall info
 			float coefWall = -(wall[0].position.y - wall[1].position.y) / (wall[0].position.x - wall[1].position.x);
@@ -101,28 +109,31 @@ sf::Vector2f Car::vertexRect(sf::RectangleShape rect, int n)
 {
 	while (n >= 4)
 		n = n - 4;
-	float incVertices[4];
+	float incVertices[4] = { 0, 0, 0, 0 };
 
-	float ipot = sqrt(std::pow(rect.getSize().x, 2) + std::pow(rect.getSize().y, 2));
-	float diagInc = acos(rect.getSize().x / ipot) * 180 / 3.1415;
+	float ipot = float(sqrt(std::pow(rect.getSize().x, 2) + std::pow(rect.getSize().y, 2)));
+	float diagInc = float(acos(rect.getSize().x / ipot) * 180 / 3.1415);
 
 	incVertices[0] = 360 - rect.getRotation() + diagInc;
 	incVertices[1] = 360 - rect.getRotation() - diagInc;
 	incVertices[2] = 360 - rect.getRotation() + 180 + diagInc;
 	incVertices[3] = 360 - rect.getRotation() + 180 - diagInc;
 
-	return (rect.getPosition() + sf::Vector2f(cos(incVertices[n] * 3.1415 / 180) * ipot / 2, -sin(incVertices[n] * 3.1415 / 180) * ipot / 2));
+	sf::Vector2f d(cos(incVertices[n] * 3.1415f / 180.f) * ipot / 2.f, 
+		-sin(incVertices[n] * 3.1415f / 180.f) * ipot / 2.f);
+	return (rect.getPosition() + d);
 }
 
 void Car::crash()
 {
 	crashed = true;
-	car.setFillColor(sf::Color(0, 0, 0, 50));
+	car.setFillColor(sf::Color(0, 0, 0, 30));
 }
 void Car::reset()
 {
 	car.setRotation(0);
 	car.setPosition(0, 0);
+	vDir = sf::Vector2f(1, 0);
 	car.setFillColor(sf::Color(Layer::random(0, 200), Layer::random(0, 200), Layer::random(0, 200)));
 	fitness = 0;
 	nextTarget = 0;
@@ -135,7 +146,7 @@ void Car::resetSensors()
 	{
 		sensors[i].setSize(sf::Vector2f(3000, 1));
 		sensors[i].setPosition(car.getPosition());
-		float ang = car.getRotation() - 10 - 20 * i;
+		float ang = car.getRotation() + 80 - 20 * i;
 		sensors[i].setRotation(ang);
 	}
 }
@@ -145,7 +156,7 @@ void Car::updateSensors(std::vector<sf::VertexArray> walls)
 	{			
 		//calculate sensor info
 		float angSens = 360 - sensors[sensor].getRotation();
-		float coefSens = tan(angSens * 3.1415 / 180);	
+		float coefSens = float(tan(angSens * 3.1415 / 180));
 		float dislocSens = sensors[sensor].getPosition().y + coefSens * sensors[sensor].getPosition().x;
 
 		for (int wall = 0; wall < walls.size(); wall++)
@@ -160,7 +171,7 @@ void Car::updateSensors(std::vector<sf::VertexArray> walls)
 			{
 				float xDist = sensors[sensor].getPosition().x - xInter;
 				float yDist = sensors[sensor].getPosition().y + yInter;
-				float dist = sqrt(std::pow(xDist, 2) + std::pow(yDist, 2));
+				float dist = float(sqrt(std::pow(xDist, 2) + std::pow(yDist, 2)));
 				sensors[sensor].setSize(sf::Vector2f(std::min(dist, sensors[sensor].getSize().x), 1));
 			}
 		}

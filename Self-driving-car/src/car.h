@@ -8,7 +8,7 @@ public:
 	Car(std::vector<int> aiSize);
 
 	void move(std::vector<sf::VertexArray> walls, std::vector<sf::VertexArray> targets);
-	void draw(sf::RenderWindow& window);
+	void draw(sf::RenderWindow& window) const;
 
 	void crash();
 	void reset();
@@ -16,9 +16,13 @@ public:
 	int fitness = 0;
 	Ai ai;
 
+	static constexpr float steer = 4;
+	static constexpr float speed = 5;
+	static constexpr float driftFactor = 0.85f;
+
 private:
 	void collide(std::vector<sf::VertexArray> walls, sf::VertexArray target);
-	sf::Vector2f vertexRect(sf::RectangleShape rect, int n);
+	static sf::Vector2f vertexRect(sf::RectangleShape rect, int n);
 
 	void resetSensors();
 	void updateSensors(std::vector<sf::VertexArray> walls);
@@ -27,7 +31,7 @@ private:
 	sf::RectangleShape sensors[9];
 	int nextTarget = 0;
 
-	static constexpr int velocity = 5;
-	static constexpr int rotation = 4;
+	//always normalized
+	sf::Vector2f vDir = sf::Vector2f(1, 0);
 };
 

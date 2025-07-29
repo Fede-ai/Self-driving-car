@@ -11,7 +11,7 @@ public:
 	Game(sf::RenderWindow& inWindow);
 	void frame();
 
-private: 		
+private:
 	void takeConsoleInputs();
 
 	void input();
@@ -21,8 +21,9 @@ private:
 	uint64_t getTime();
 
 	sf::RenderWindow& window;
-	std::vector<int> aiSizeVector;
-	sf::Vector2f windowDim = sf::Vector2f(sf::VideoMode::getDesktopMode().width*2/3, sf::VideoMode::getDesktopMode().width*3/8);
+	//11 inputs and 3 outputs
+	const std::vector<int> aiSizeVector { 11, 30, 3 };
+	sf::Vector2u windowDim = sf::Vector2u(sf::VideoMode::getDesktopMode().width*2/3, sf::VideoMode::getDesktopMode().width*3/8);
 	sf::ContextSettings settings;
 	sf::Vector2f lastMousePos;
 	bool canFullscreen = true;
@@ -44,10 +45,13 @@ private:
 	uint64_t timeStartGeneration = getTime();
 	uint64_t timeGeneration = 0;
 
-	static constexpr int nCars = 50;
+	static constexpr int nCars = 100;
 	std::vector<Car> cars;
 	std::vector<sf::VertexArray> walls;
 	std::vector<sf::VertexArray> targets;
+
+	sf::RectangleShape userCar;
+	sf::Vector2f userCarVDir = sf::Vector2f(1, 0);
 
 	bool isMoving = false;
 	bool isBuildingWall = false;

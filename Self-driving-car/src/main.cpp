@@ -18,7 +18,7 @@ int main()
 			if (event.type == sf::Event::MouseWheelScrolled)
 			{
 				sf::View view(window.getView());
-				view.zoom(1 - 0.1 * event.mouseWheelScroll.delta);
+				view.zoom(float(1 - 0.1 * event.mouseWheelScroll.delta));
 				window.setView(view);
 			}
 		}
